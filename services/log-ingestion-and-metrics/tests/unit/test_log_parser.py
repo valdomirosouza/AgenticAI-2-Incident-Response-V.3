@@ -69,38 +69,48 @@ class TestLatencySignal:
 
 class TestErrorSignal:
     def test_clean_request_error_zero(self, points: list) -> None:
-        # status_code=200, termination_state="--" → ERROR=0
+        # status_code=200, termination_state="--" → ERROR=0.0 (no error key written)
         assert _signal(points, SignalType.ERROR) == 0.0
 
-    def test_4xx_status_code_error_one(
+    def test_4xx_status_code_error_4(
         self, parser: LogParser, error_4xx_entry_dict: dict[str, Any]
     ) -> None:
+        # status_code=404 → ERROR=4.0 (adapter routes to lim:err4)
         entry = HaproxyLogEntry.model_validate(error_4xx_entry_dict)
         pts = parser.parse(entry, _WINDOW)
-        assert _signal(pts, SignalType.ERROR) == 1.0
+        assert _signal(pts, SignalType.ERROR) == 4.0
 
-    def test_5xx_status_code_error_one(
+    def test_5xx_status_code_error_5(
         self, parser: LogParser, error_5xx_entry_dict: dict[str, Any]
     ) -> None:
+        # status_code=503 → ERROR=5.0 (adapter routes to lim:err5)
         entry = HaproxyLogEntry.model_validate(error_5xx_entry_dict)
         pts = parser.parse(entry, _WINDOW)
-        assert _signal(pts, SignalType.ERROR) == 1.0
+        assert _signal(pts, SignalType.ERROR) == 5.0
 
-    def test_abnormal_termination_error_one_despite_200(
+    def test_abnormal_termination_error_5_despite_200(
         self, parser: LogParser, abnormal_termination_entry_dict: dict[str, Any]
     ) -> None:
-        # Spec LIM-01 §3.4: termination_state != "--" → ERROR=1 regardless of status_code
+        # Spec LIM-01 §3.4: termination_state != "--" → classified as 5xx regardless of status_code
         entry = HaproxyLogEntry.model_validate(abnormal_termination_entry_dict)
         pts = parser.parse(entry, _WINDOW)
-        assert _signal(pts, SignalType.ERROR) == 1.0
+        assert _signal(pts, SignalType.ERROR) == 5.0
 
-    def test_boundary_status_400_is_error(
+    def test_boundary_status_400_is_4xx_error(
         self, parser: LogParser, haproxy_entry_dict: dict[str, Any]
     ) -> None:
         haproxy_entry_dict["status_code"] = 400
         entry = HaproxyLogEntry.model_validate(haproxy_entry_dict)
         pts = parser.parse(entry, _WINDOW)
-        assert _signal(pts, SignalType.ERROR) == 1.0
+        assert _signal(pts, SignalType.ERROR) == 4.0
+
+    def test_boundary_status_500_is_5xx_error(
+        self, parser: LogParser, haproxy_entry_dict: dict[str, Any]
+    ) -> None:
+        haproxy_entry_dict["status_code"] = 500
+        entry = HaproxyLogEntry.model_validate(haproxy_entry_dict)
+        pts = parser.parse(entry, _WINDOW)
+        assert _signal(pts, SignalType.ERROR) == 5.0
 
     def test_status_399_is_not_error(
         self, parser: LogParser, haproxy_entry_dict: dict[str, Any]

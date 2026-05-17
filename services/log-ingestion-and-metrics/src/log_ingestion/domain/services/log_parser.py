@@ -92,16 +92,19 @@ class LogParser:
         return int(timestamp.timestamp()) // window_seconds * window_seconds
 
     def _error_value(self, entry: HaproxyLogEntry) -> float:
-        """Return 1.0 if the entry represents an error, 0.0 otherwise.
+        """Return the error class as a float for Redis key routing.
 
-        Error conditions (Spec LIM-01 §3.4):
-          - status_code in 400–599
-          - termination_state != '--' (abnormal connection termination)
+        0.0 → no error; 4.0 → 4xx (adapter writes lim:err4);
+        5.0 → 5xx or abnormal termination (adapter writes lim:err5).
+        Abnormal termination is always classified as 5xx because it represents a
+        server-side or infrastructure failure (Spec LIM-01 §3.4).
         """
         if entry.termination_state != "--":
-            return 1.0
-        if entry.status_code >= 400:
-            return 1.0
+            return 5.0
+        if 400 <= entry.status_code <= 499:
+            return 4.0
+        if entry.status_code >= 500:
+            return 5.0
         return 0.0
 
     def _saturation_value(self, entry: HaproxyLogEntry) -> float:
