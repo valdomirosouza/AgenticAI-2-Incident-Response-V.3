@@ -11,6 +11,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.3.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.2.0...v0.3.0) (2026-05-17)
+
+
+### ### Added
+
+* **changelog:** fix structure — move [Unreleased] to top, remove duplicate entries, fix double-### headings ([0b417b6](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/0b417b630a79c47231a121cd3d0920893b35d7f8))
+* **skills:** add observability skills library for issue [#18](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/18) ([#45](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/45)) ([e8ee8f6](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/e8ee8f6bf4ec268d645045c4fee02a69ecaeb9c2))
+* **skills:** add SDLC skills library for issue [#17](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/17) ([#44](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/44)) ([ec8aa1e](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/ec8aa1eab77d8f0ec976e6b535f9840ee18babe4))
+* **skills:** add writing and engineering skills for issue [#16](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/16) ([#42](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/42)) ([bb1b13a](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/bb1b13a0b50e592bbe155eaabe90e40ceae400f5))
+
+
+### ### Fixed
+
+* **ci:** add continue-on-error to claude-review job ([1d5caf2](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/1d5caf22c87e92343fc7dadf3fd30bdea359e5d8))
+
 ## [Unreleased]
 
 ---
