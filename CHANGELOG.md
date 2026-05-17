@@ -15,6 +15,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `specs/ethics/16-autonomy-boundaries.md` — Full action-type × autonomy matrix; HITL timeout protocol; ApprovalToken schema; BLOCKED enforcement layers; EU AI Act Art. 14 compliance (issue #13)
+- `specs/ethics/17-audit-trail.md` — 12-field event schema; 22-event vocabulary; SHA-256 hash chain; WORM storage; access control; 2-year retention; erasure procedure (issue #13)
+- `specs/ethics/18-bias-audit-plan.md` — 4 bias metrics (SCER, CV_MTTD, RCRR, KL_drift); Fairlearn tooling; quarterly cadence; remediation criteria; kill-switch drill (issue #13)
 - `specs/security/12-threat-model.md` — STRIDE register (20 threats) across 4 components; trust boundary map; residual risk register (issue #12)
 - `specs/security/13-sast-dast-policy.md` — SAST toolchain (Semgrep/Bandit/CodeQL/Checkov) + 4 custom rules; DAST (ZAP+Nuclei); remediation SLAs; false-positive process (issue #12)
 - `specs/security/14-secrets-management.md` — 8-secret catalogue; Vault policies; rotation schedule; 8-step emergency revocation (RTO < 30s) (issue #12)
