@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.1](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.0...v0.6.1) (2026-05-17)
+
+### Added
+
+- **lim:** Phase 7 [B1] — domain models: `HaproxyLogEntry`, `MetricPoint`, `SignalType`, `AnalyticsResult`; 34 unit tests green — issue [#61](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/61) ([#71](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/71)) ([ef2ddb8](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/ef2ddb8))
+- **chore:** root `.gitignore` — excludes `__pycache__`, `.venv`, `.coverage`, `.mypy_cache`
+
+---
+
 ## [0.6.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.5.3...v0.6.0) (2026-05-17)
 
 ### Added
