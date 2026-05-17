@@ -13,6 +13,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `docs/adr/ADR-0005-trunk-based-development-branching.md` — Trunk-based development with short-lived feature branches (issue #4)
+- `docs/adr/ADR-0006-conventional-commits-semver.md` — Conventional Commits v1.0.0 + SemVer 2.0.0 (issue #4)
+- `docs/adr/ADR-0007-pr-merge-gates-ci-checks.md` — 14 mandatory PR gate checks + 4 doc gates (issue #4)
+- `docs/adr/ADR-0008-test-coverage-thresholds.md` — Tiered coverage: 95% guardrails, 90% domain, 80% overall (issue #4)
+- `docs/adr/ADR-0009-blue-green-deployment-strategy.md` — Blue-Green deployment with < 30s rollback SLA (issue #4)
+- `docs/adr/ADR-0010-blameless-post-mortem-format.md` — Blameless 8-section post-mortem as mandatory format (issue #4)
 - `docs/adr/ADR-0001-c4-model-architecture-documentation.md` — C4 Model adopted for all architecture diagrams (issue #3)
 - `docs/adr/ADR-0002-hexagonal-architecture-agent-services.md` — Hexagonal Architecture (Ports & Adapters) for all agent services (issue #3)
 - `docs/adr/ADR-0003-llm-provider-model-selection.md` — Anthropic Claude Sonnet 4.6 selected as primary LLM (issue #3)
