@@ -1,0 +1,128 @@
+# Default Helm values — no secrets here (RULE-C03).
+# Override per-environment via values-staging.yaml / values-production.yaml.
+
+replicaCount: 2
+
+image:
+  repository: ghcr.io/valdomirosouza/incident-response-copilot
+  pullPolicy: IfNotPresent
+  # tag is set to chart appVersion by default; overridden in CD pipeline
+  tag: ""
+
+imagePullSecrets: []
+
+serviceAccount:
+  create: true
+  annotations: {}
+  name: "incident-response-copilot"
+  # Workload Identity annotation injected per-environment
+  workloadIdentity:
+    enabled: false
+    serviceAccountEmail: ""
+
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8080"
+  prometheus.io/path: "/metrics"
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+securityContext:
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 8080
+
+ingress:
+  enabled: false
+  className: ""
+  annotations: {}
+  hosts: []
+  tls: []
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+autoscaling:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Blue-green via Argo Rollouts (ADR-0009)
+rollout:
+  enabled: true
+  blueGreen:
+    autoPromotionEnabled: false # HITL: operator must manually promote
+    scaleDownDelaySeconds: 30 # drain window before scaling down old version
+    prePromotionAnalysis:
+      enabled: true
+      successCondition: "result[0] >= 0.99" # p99 success rate threshold
+    postPromotionAnalysis:
+      enabled: true
+
+livenessProbe:
+  httpGet:
+    path: /health/live
+    port: 8080
+  initialDelaySeconds: 15
+  periodSeconds: 20
+
+readinessProbe:
+  httpGet:
+    path: /health/ready
+    port: 8080
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+# Environment variables — values come from Vault via the agent-injector (ADR-0023)
+env:
+  - name: OTEL_SERVICE_NAME
+    value: incident-response-copilot
+  - name: OTEL_EXPORTER_OTLP_ENDPOINT
+    value: http://tempo.monitoring:4317
+  - name: PROMETHEUS_URL
+    value: http://prometheus.monitoring:9090
+  - name: LOKI_URL
+    value: http://loki.monitoring:3100
+  - name: TEMPO_URL
+    value: http://tempo.monitoring:3200
+
+# Secrets injected by Vault agent-injector — never stored in values (RULE-C03)
+vaultSecrets:
+  enabled: true
+  role: incident-response-copilot
+  secrets:
+    - path: secret/data/copilot/anthropic
+      key: ANTHROPIC_API_KEY
+    - path: secret/data/copilot/audit-gcs
+      key: AUDIT_GCS_BUCKET
+    - path: vault/hitl/hmac-key
+      key: VAULT_HITL_HMAC_KEY
+
+nodeSelector: {}
+tolerations: []
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      - labelSelector:
+          matchLabels:
+            app.kubernetes.io/name: incident-response-copilot
+        topologyKey: kubernetes.io/hostname

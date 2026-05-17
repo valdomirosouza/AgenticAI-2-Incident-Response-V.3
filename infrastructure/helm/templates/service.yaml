@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "incident-response-copilot.fullname" . }}-active
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "incident-response-copilot.labels" . | nindent 4 }}
+    rollouts-pod-template-hash: active
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "incident-response-copilot.selectorLabels" . | nindent 4 }}
+---
+# Preview service — receives traffic during pre-promotion analysis (ADR-0009)
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "incident-response-copilot.fullname" . }}-preview
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "incident-response-copilot.labels" . | nindent 4 }}
+    rollouts-pod-template-hash: preview
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - port: {{ .Values.service.port }}
+      targetPort: {{ .Values.service.targetPort }}
+      protocol: TCP
+      name: http
+  selector:
+    {{- include "incident-response-copilot.selectorLabels" . | nindent 4 }}

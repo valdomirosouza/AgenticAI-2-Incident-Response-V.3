@@ -1,0 +1,84 @@
+# SLO alerting rules — error budget burn rate (ADR-0015, spec 06)
+# Multi-window, multi-burn-rate approach per Google SRE Workbook chapter 5.
+groups:
+  - name: slo.availability
+    rules:
+      # Fast burn — 1h window; 14x burn rate exhausts 30-day budget in ~2 days
+      - alert: AvailabilitySLOBurnRateFast
+        expr: |
+          (
+            sum(rate(http_requests_total{service="incident-response-copilot",status=~"5.."}[1h]))
+            /
+            sum(rate(http_requests_total{service="incident-response-copilot"}[1h]))
+          ) > (14 * (1 - 0.999))
+        for: 2m
+        labels:
+          severity: critical
+          slo: availability
+          window: 1h
+        annotations:
+          summary: "Availability SLO fast burn (1h) — incident-response-copilot"
+          description: "Error rate {{ $value | humanizePercentage }} is burning error budget at 14x rate."
+          runbook_url: "https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/docs/runbooks/slo-availability.md"
+
+      # Slow burn — 6h window; 6x burn rate
+      - alert: AvailabilitySLOBurnRateSlow
+        expr: |
+          (
+            sum(rate(http_requests_total{service="incident-response-copilot",status=~"5.."}[6h]))
+            /
+            sum(rate(http_requests_total{service="incident-response-copilot"}[6h]))
+          ) > (6 * (1 - 0.999))
+        for: 15m
+        labels:
+          severity: warning
+          slo: availability
+          window: 6h
+        annotations:
+          summary: "Availability SLO slow burn (6h) — incident-response-copilot"
+          description: "Error rate {{ $value | humanizePercentage }} is burning error budget at 6x rate."
+
+  - name: slo.latency
+    rules:
+      # p99 latency SLO: 95% of requests complete in < 500ms (spec 06 §3.1)
+      - alert: LatencySLOBurnRateFast
+        expr: |
+          (
+            1 - (
+              sum(rate(http_request_duration_seconds_bucket{service="incident-response-copilot",le="0.5"}[1h]))
+              /
+              sum(rate(http_request_duration_seconds_count{service="incident-response-copilot"}[1h]))
+            )
+          ) > (14 * (1 - 0.95))
+        for: 2m
+        labels:
+          severity: critical
+          slo: latency
+        annotations:
+          summary: "Latency SLO fast burn — p99 > 500ms threshold"
+
+  - name: slo.mttd-mttr
+    rules:
+      # MTTD SLO: median detection time must stay below 300s (spec 06, §4.1)
+      - alert: MTTDMedianExceedsThreshold
+        expr: |
+          histogram_quantile(0.50, rate(incident_mttd_seconds_bucket[1h])) > 300
+        for: 5m
+        labels:
+          severity: warning
+          slo: mttd
+        annotations:
+          summary: "MTTD p50 exceeded 300s threshold"
+          description: "Median MTTD is {{ $value | humanizeDuration }}; target ≤ 300s."
+
+      # MTTR SLO: p75 recovery time must stay below 1800s (30 minutes)
+      - alert: MTTRp75ExceedsThreshold
+        expr: |
+          histogram_quantile(0.75, rate(incident_mttr_seconds_bucket[6h])) > 1800
+        for: 10m
+        labels:
+          severity: warning
+          slo: mttr
+        annotations:
+          summary: "MTTR p75 exceeded 1800s (30 min) threshold"
+          description: "p75 MTTR is {{ $value | humanizeDuration }}; target ≤ 1800s."

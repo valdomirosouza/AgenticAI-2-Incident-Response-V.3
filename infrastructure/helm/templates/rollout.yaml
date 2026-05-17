@@ -1,0 +1,85 @@
+{{- if .Values.rollout.enabled }}
+# Argo Rollout — blue-green deployment strategy (ADR-0009)
+# autoPromotionEnabled: false enforces HITL operator approval before traffic switch
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: {{ include "incident-response-copilot.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "incident-response-copilot.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "incident-response-copilot.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "incident-response-copilot.selectorLabels" . | nindent 8 }}
+      annotations:
+        {{- toYaml .Values.podAnnotations | nindent 8 }}
+        {{- if .Values.vaultSecrets.enabled }}
+        vault.hashicorp.com/agent-inject: "true"
+        vault.hashicorp.com/role: {{ .Values.vaultSecrets.role | quote }}
+        {{- range .Values.vaultSecrets.secrets }}
+        vault.hashicorp.com/agent-inject-secret-{{ .key | lower }}: {{ .path | quote }}
+        {{- end }}
+        {{- end }}
+    spec:
+      serviceAccountName: {{ include "incident-response-copilot.serviceAccountName" . }}
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: {{ .Chart.Name }}
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          image: {{ include "incident-response-copilot.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          env:
+            {{- toYaml .Values.env | nindent 12 }}
+          livenessProbe:
+            {{- toYaml .Values.livenessProbe | nindent 12 }}
+          readinessProbe:
+            {{- toYaml .Values.readinessProbe | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir: {}
+      nodeSelector:
+        {{- toYaml .Values.nodeSelector | nindent 8 }}
+      affinity:
+        {{- toYaml .Values.affinity | nindent 8 }}
+      tolerations:
+        {{- toYaml .Values.tolerations | nindent 8 }}
+  strategy:
+    blueGreen:
+      activeService: {{ include "incident-response-copilot.fullname" . }}-active
+      previewService: {{ include "incident-response-copilot.fullname" . }}-preview
+      autoPromotionEnabled: {{ .Values.rollout.blueGreen.autoPromotionEnabled }}
+      scaleDownDelaySeconds: {{ .Values.rollout.blueGreen.scaleDownDelaySeconds }}
+      {{- if .Values.rollout.blueGreen.prePromotionAnalysis.enabled }}
+      prePromotionAnalysis:
+        templates:
+          - templateName: success-rate
+        args:
+          - name: service-name
+            value: {{ include "incident-response-copilot.fullname" . }}-preview
+      {{- end }}
+      {{- if .Values.rollout.blueGreen.postPromotionAnalysis.enabled }}
+      postPromotionAnalysis:
+        templates:
+          - templateName: success-rate
+        args:
+          - name: service-name
+            value: {{ include "incident-response-copilot.fullname" . }}-active
+      {{- end }}
+{{- end }}
