@@ -137,4 +137,14 @@ and the compliance driver that makes it non-negotiable.
 
 ---
 
+### Phase 7 — Log-Ingestion-and-Metrics (LIM)
+
+| ID       | Title                                                                 | Skills governed                                           | Compliance driver                           | Priority |
+| -------- | --------------------------------------------------------------------- | --------------------------------------------------------- | ------------------------------------------- | -------- |
+| ADR-0033 | LIM service location and project layout within the repository         | `sdlc/design.md`, `engineering/harness-config.md`         | ADR-0002 (hexagonal architecture extension) | High     |
+| ADR-0034 | Redis Sorted Sets for latency distribution storage per window bucket  | `observability/metrics.md`, `devsecops/supply-chain.md`   | ADR-0030 (TTL policy), NIST AI RMF GOVERN-1 | High     |
+| ADR-0035 | Exact ZRANK percentile algorithm via ZRANGE (no probabilistic sketch) | `observability/metrics.md`, `domain/mttd-mttr-metrics.md` | EU AI Act Art. 12 (auditability), ADR-0034  | High     |
+
+---
+
 _Source: CLAUDE.md §6.3 and §6.4 | ADR governance rules: CLAUDE.md §6_
