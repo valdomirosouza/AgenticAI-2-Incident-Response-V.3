@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `specs/system/00-project-brief.md` — Vision, objectives, scope and success criteria; RQ1–RQ4 traceability (issue #9)
+- `specs/system/01-system-architecture.md` — C4 Level 1 + Level 2 diagrams; hexagonal layer constraints; PII boundary data flow (issue #9)
+- `specs/system/02-agent-design.md` — 6-agent roster; orchestrator state machine; HITL/HOTL trigger matrix; AgentMessage schema (issue #9)
+- `specs/system/03-incident-lifecycle.md` — Full lifecycle stages; MTTD/MTTR formal definitions; quantitative targets per severity (issue #9)
 - `docs/adr/ADR-0027-privacy-by-design-sdlc.md` — Privacy by Design at all 7 SDLC phases; mandatory Privacy Impact section in every spec (issue #8)
 - `docs/adr/ADR-0028-pii-sanitization-llm-apis.md` — Presidio + regex PII sanitization gate before every LLM API call; `sanitized=True` hard gate (issue #8)
 - `docs/adr/ADR-0029-dpia-ripd-before-production.md` — DPIA/RIPD hard production gate; 6-section document with DPO sign-off required (issue #8)
