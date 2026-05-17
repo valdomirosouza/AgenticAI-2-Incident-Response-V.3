@@ -16,6 +16,12 @@ Phase 0 — Bootstrap
                     └── Phase 3 — Skills (each domain unlocks after its specs are merged)
                             └── Phase 4 — Harness & CI/CD
                                     └── Phase 5 — Source Code Scaffolding
+
+Phase 7 — Log-Ingestion-and-Metrics (independent track, starts after Phase 5)
+    A1 (Specs) ──► A2 (ADRs) ──► B1 (Domain Models) ──► B2 (Parser+Percentile)
+        ──► C1 (Ports) ──► C2 (Redis Adapter)
+            ──► D1 (POST /ingestion) + D2 (GET /analytics)
+                ──► E1 (OTel+Alerts) ──► E2 (Tests+Harness)
 ```
 
 ---
@@ -110,17 +116,41 @@ Directory structure, module boundaries and entry-point stubs. Full implementatio
 
 ---
 
+## Phase 7 — Log-Ingestion-and-Metrics Sub-project
+
+HAProxy JSON log ingestion, Golden Signals extraction per path/backend, Redis Sorted Set percentile storage, and `GET /analytics` query API. Lives at `services/log-ingestion-and-metrics/`. Hexagonal architecture, same harness gates (G01–G14) as main project.
+
+**Confirmed schema:** `timestamp`, `client_ip` (PII), `frontend`, `backend`, `server`, `status_code`, `bytes_read`, `request` (method+path), `termination_state`, `timers{total_time, wait, connect, response}`.
+
+| #                                                                                    | Issue                                                                                | Deliverables                                                                  | Prerequisite       | Priority |
+| ------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------- | ------------------ | -------- |
+| [#59](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/59) | **[A1]** Spec: Log Ingestion & Analytics APIs                                        | `specs/log-ingestion-api.md`, `specs/analytics-api.md`, `pyproject.toml`      | None — entry point | High     |
+| [#60](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/60) | **[A2]** ADRs 0033–0035: service location, Redis sorted sets, exact ZRANK percentile | `ADR-0033`, `ADR-0034`, `ADR-0035`                                            | #59 approved       | High     |
+| [#61](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/61) | **[B1]** Domain models: HaproxyLogEntry, MetricPoint, SignalType, AnalyticsResult    | `domain/models/haproxy_log.py`, `metric.py`, `exceptions.py`                  | #59 + #60 merged   | High     |
+| [#62](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/62) | **[B2]** Domain services: log parser + percentile calculator                         | `domain/services/log_parser.py`, `percentile_service.py` + unit tests         | #61 merged         | High     |
+| [#63](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/63) | **[C1]** Ports: MetricStorePort + IngestionPort (hexagonal ABCs)                     | `ports/metric_store_port.py`, `ingestion_port.py`                             | #61 merged         | High     |
+| [#64](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/64) | **[C2]** Redis adapter: RedisMetricAdapter (ZADD/INCR + EXPIRE pipeline)             | `adapters/redis_metric_adapter.py` + integration tests                        | #63 merged         | High     |
+| [#65](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/65) | **[D1]** POST /ingestion endpoint + FastAPI app entrypoint                           | `api/routers/ingestion.py`, `api/main.py`, `api/routers/health.py`            | #63 + #64 merged   | High     |
+| [#66](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/66) | **[D2]** GET /analytics endpoint — percentile query service                          | `api/routers/analytics.py`                                                    | #63 + #64 merged   | High     |
+| [#67](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/67) | **[E1]** OTel instrumentation + Prometheus alerts + Dockerfile                       | `observability/metrics.py`, `Dockerfile`, `log-ingestion-alerts.yaml`         | #65 + #66 merged   | Medium   |
+| [#68](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/68) | **[E2]** Full test suite + CI harness extension (G01–G14 + import-linter)            | unit+integration tests, `harness/code-check.yml` patch, `.importlinter` patch | #67 merged         | High     |
+
+**Version rotation:** A1+A2 → v0.6.0 · B1+B2 → v0.6.1 · C1+C2 → v0.6.2 · D1+D2 → v0.6.3 · E1+E2 → v0.7.0
+
+---
+
 ## Summary
 
-| Phase               | Issues                            | Artifacts                     | Status |
-| ------------------- | --------------------------------- | ----------------------------- | ------ |
-| 0 — Bootstrap       | #2                                | 5 files                       | Open   |
-| 1 — ADRs            | #3 · #4 · #5 · #6 · #7 · #8       | 32 ADR files                  | Open   |
-| 2 — Specs           | #9 · #10 · #11 · #12 · #13 · #14  | 22 spec files                 | Open   |
-| 3 — Skills          | #15 · #16 · #17 · #18 · #19 · #20 | ~30 skill files               | Open   |
-| 4 — Harness & CI/CD | #21 · #22                         | 4 harness YAMLs + 4 workflows | Open   |
-| 5 — Src Scaffolding | #23 · #24 · #25                   | src/, tests/, infrastructure/ | Open   |
-| **Total**           | **24 issues**                     | **~100 artifacts**            |        |
+| Phase                         | Issues                                                    | Artifacts                           | Status |
+| ----------------------------- | --------------------------------------------------------- | ----------------------------------- | ------ |
+| 0 — Bootstrap                 | #2                                                        | 5 files                             | Done   |
+| 1 — ADRs                      | #3 · #4 · #5 · #6 · #7 · #8                               | 32 ADR files                        | Done   |
+| 2 — Specs                     | #9 · #10 · #11 · #12 · #13 · #14                          | 22 spec files                       | Done   |
+| 3 — Skills                    | #15 · #16 · #17 · #18 · #19 · #20                         | ~30 skill files                     | Done   |
+| 4 — Harness & CI/CD           | #21 · #22                                                 | 4 harness YAMLs + 4 workflows       | Done   |
+| 5 — Src Scaffolding           | #23 · #24 · #25                                           | src/, tests/, infrastructure/       | Done   |
+| 7 — Log-Ingestion-and-Metrics | #59 · #60 · #61 · #62 · #63 · #64 · #65 · #66 · #67 · #68 | services/log-ingestion-and-metrics/ | Open   |
+| **Total**                     | **34 issues**                                             | **~130 artifacts**                  |        |
 
 ---
 
@@ -128,7 +158,8 @@ Directory structure, module boundaries and entry-point stubs. Full implementatio
 
 | Label                               | Meaning                                       |
 | ----------------------------------- | --------------------------------------------- |
-| `phase:0-bootstrap` … `phase:5-src` | Execution phase                               |
+| `phase:0-bootstrap` … `phase:5-src` | Execution phase (Phases 0–5)                  |
+| `phase:7-lim`                       | Phase 7: Log-Ingestion-and-Metrics            |
 | `type:adr`                          | Architecture Decision Record                  |
 | `type:spec`                         | SDD spec artifact                             |
 | `type:skill`                        | Skills library file                           |
