@@ -11,6 +11,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.1](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.5.0...v0.5.1) (2026-05-17)
+
+
+### ### Added
+
+* **changelog:** fix double-### headings in v0.5.0–v0.3.0, reposition [Unreleased] to top ([9b680bb](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/9b680bb49e37c2b15db0264b1f5e1eedad667c5a))
+
 ## [Unreleased]
 
 ---
