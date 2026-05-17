@@ -11,6 +11,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.4.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.3.0...v0.4.0) (2026-05-17)
+
+
+### ### Added
+
+* **skills:** add DevSecOps skills library (issue [#19](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/19)) ([#46](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/46)) ([fb6d14e](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/fb6d14ea9b2ccededef4f8e288e1929559cf0707))
+* **skills:** add ethics and privacy skills — issue [#20](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/20) ([#48](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/48)) ([6a486c5](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/6a486c5c56d5ba9fc5faebb71de86a2a583060d7))
+
 ## [0.3.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.2.0...v0.3.0) (2026-05-17)
 
 
