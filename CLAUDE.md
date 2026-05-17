@@ -289,24 +289,27 @@ docs/adr/ADR-0004-adding-springer-arxiv-databases.md
 
 > **Full annotated repository tree:** `docs/repo-structure.md`
 
-| Directory / File         | Purpose                                                          |
-| ------------------------ | ---------------------------------------------------------------- |
-| `specs/`                 | SDD specs — 22 spec files across 5 domains (section 2)           |
-| `docs/adr/`              | Architecture Decision Records — ADR-0001 to ADR-0032 (section 6) |
-| `docs/repo-structure.md` | Full annotated directory tree                                    |
-| `skills/`                | Project and enterprise skills (section 4)                        |
-| `harness/`               | Harness check YAML configs (section 3)                           |
-| `src/`                   | Application source — agents, tools, memory, guardrails, api      |
-| `tests/`                 | Test suite — unit, integration, e2e, security, fixtures          |
-| `infrastructure/`        | IaC — terraform, helm, monitoring                                |
-| `.github/workflows/`     | CI/CD pipelines — ci, cd-staging, cd-production, sbom            |
-| `CHANGELOG.md`           | Release notes (Keep a Changelog + SemVer)                        |
-| `SECURITY.md`            | Vulnerability disclosure policy                                  |
-| `PRIVACY.md`             | Data processing notice (LGPD / GDPR)                             |
+| Directory / File         | Purpose                                                                  |
+| ------------------------ | ------------------------------------------------------------------------ |
+| `specs/`                 | SDD specs — 22 spec files across 5 domains (section 2)                   |
+| `docs/adr/`              | Architecture Decision Records — ADR-0001 to ADR-0032 (section 6)         |
+| `docs/repo-structure.md` | Full annotated directory tree                                            |
+| `skills/`                | Project and enterprise skills (section 4)                                |
+| `harness/`               | Harness check YAML configs (section 3)                                   |
+| `src/`                   | Application source — agents, tools, memory, guardrails, api              |
+| `tests/`                 | Test suite — unit, integration, e2e, security, fixtures                  |
+| `infrastructure/`        | IaC — terraform, helm, monitoring                                        |
+| `.github/workflows/`     | CI/CD pipelines — ci, cd-staging, cd-production, sbom                    |
+| `CHANGELOG.md`           | Release notes (Keep a Changelog + SemVer)                                |
+| `SECURITY.md`            | Vulnerability disclosure policy                                          |
+| `PRIVACY.md`             | Data processing notice (LGPD / GDPR)                                     |
+| `issues.md`              | Implementation backlog — 24 issues across 6 phases with dependency order |
 
 ---
 
 ## 8. Standard Workflow
+
+> **Implementation backlog — phases, issues and dependency order:** `issues.md`
 
 For every task in this project, execute the steps in order. Do not skip steps.
 
