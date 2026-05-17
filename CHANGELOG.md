@@ -11,39 +11,37 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+---
+
 ## [0.5.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.4.0...v0.5.0) (2026-05-17)
 
+### Added
 
-### ### Added
-
-* **ci:** add GitHub Actions CI/CD workflows — issue [#22](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/22) ([#51](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/51)) ([8970615](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/8970615fca1e5d501b8c821b5b2cf243cc770933))
-* **harness:** add harness gate configuration files — issue [#21](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/21) ([#49](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/49)) ([bd8a3ba](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/bd8a3bacefe3859182b56a7750bca805f7ecb174))
-* **src:** scaffold application source — hexagonal architecture, agents, guardrails — issue [#23](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/23) ([#52](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/52)) ([fae092c](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/fae092cac448cf6f838cf32ecb3a1cc988be7ed1))
+- **ci:** add GitHub Actions CI/CD workflows — issue [#22](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/22) ([#51](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/51)) ([8970615](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/8970615fca1e5d501b8c821b5b2cf243cc770933))
+- **harness:** add harness gate configuration files — issue [#21](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/21) ([#49](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/49)) ([bd8a3ba](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/bd8a3bacefe3859182b56a7750bca805f7ecb174))
+- **src:** scaffold application source — hexagonal architecture, agents, guardrails — issue [#23](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/23) ([#52](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/52)) ([fae092c](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/fae092cac448cf6f838cf32ecb3a1cc988be7ed1))
 
 ## [0.4.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.3.0...v0.4.0) (2026-05-17)
 
+### Added
 
-### ### Added
-
-* **skills:** add DevSecOps skills library (issue [#19](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/19)) ([#46](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/46)) ([fb6d14e](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/fb6d14ea9b2ccededef4f8e288e1929559cf0707))
-* **skills:** add ethics and privacy skills — issue [#20](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/20) ([#48](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/48)) ([6a486c5](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/6a486c5c56d5ba9fc5faebb71de86a2a583060d7))
+- **skills:** add DevSecOps skills library (issue [#19](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/19)) ([#46](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/46)) ([fb6d14e](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/fb6d14ea9b2ccededef4f8e288e1929559cf0707))
+- **skills:** add ethics and privacy skills — issue [#20](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/20) ([#48](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/48)) ([6a486c5](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/6a486c5c56d5ba9fc5faebb71de86a2a583060d7))
 
 ## [0.3.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.2.0...v0.3.0) (2026-05-17)
 
+### Added
 
-### ### Added
+- **changelog:** fix structure — move [Unreleased] to top, remove duplicate entries, fix double-### headings ([0b417b6](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/0b417b630a79c47231a121cd3d0920893b35d7f8))
+- **skills:** add observability skills library for issue [#18](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/18) ([#45](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/45)) ([e8ee8f6](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/e8ee8f6bf4ec268d645045c4fee02a69ecaeb9c2))
+- **skills:** add SDLC skills library for issue [#17](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/17) ([#44](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/44)) ([ec8aa1e](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/ec8aa1eab77d8f0ec976e6b535f9840ee18babe4))
+- **skills:** add writing and engineering skills for issue [#16](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/16) ([#42](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/42)) ([bb1b13a](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/bb1b13a0b50e592bbe155eaabe90e40ceae400f5))
 
-* **changelog:** fix structure — move [Unreleased] to top, remove duplicate entries, fix double-### headings ([0b417b6](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/0b417b630a79c47231a121cd3d0920893b35d7f8))
-* **skills:** add observability skills library for issue [#18](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/18) ([#45](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/45)) ([e8ee8f6](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/e8ee8f6bf4ec268d645045c4fee02a69ecaeb9c2))
-* **skills:** add SDLC skills library for issue [#17](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/17) ([#44](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/44)) ([ec8aa1e](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/ec8aa1eab77d8f0ec976e6b535f9840ee18babe4))
-* **skills:** add writing and engineering skills for issue [#16](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/16) ([#42](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/42)) ([bb1b13a](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/bb1b13a0b50e592bbe155eaabe90e40ceae400f5))
+### Fixed
 
-
-### ### Fixed
-
-* **ci:** add continue-on-error to claude-review job ([1d5caf2](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/1d5caf22c87e92343fc7dadf3fd30bdea359e5d8))
-
-## [Unreleased]
+- **ci:** add continue-on-error to claude-review job ([1d5caf2](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/1d5caf22c87e92343fc7dadf3fd30bdea359e5d8))
 
 ---
 
