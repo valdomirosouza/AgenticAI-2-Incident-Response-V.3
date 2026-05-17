@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `docs/adr/ADR-0023-hitl-autonomous-remediation.md` — HITL cryptographic enforcement for all production remediation (issue #7)
+- `docs/adr/ADR-0024-immutable-agent-audit-trail.md` — Append-only hash-chained audit trail for every agent decision (issue #7)
+- `docs/adr/ADR-0025-kill-switch-credential-revocation.md` — Kill-switch + credential revocation protocol with RTO < 60s (issue #7)
+- `docs/adr/ADR-0026-algorithmic-bias-audit-cadence.md` — Quarterly bias audit for TriageAgent and RCAAgent with release gate (issue #7)
+
 ---
 
 ## [0.2.0-dev] — 2026-05-17
