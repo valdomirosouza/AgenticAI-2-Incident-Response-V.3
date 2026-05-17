@@ -13,6 +13,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `docs/adr/ADR-0016-stride-threat-modeling-method.md` — STRIDE + LLM extensions as mandatory threat modeling method (issue #6)
+- `docs/adr/ADR-0017-sast-mandatory-pr-gate.md` — Semgrep + Bandit + CodeQL + Checkov; zero Critical/High to merge (issue #6)
+- `docs/adr/ADR-0018-dast-staging-before-release.md` — OWASP ZAP + Nuclei in staging gate before every release (issue #6)
+- `docs/adr/ADR-0019-cyclonedx-sbom-per-build.md` — CycloneDX v1.6 SBOM via Syft on every build; Grype CVE gate (issue #6)
+- `docs/adr/ADR-0020-zero-trust-secrets-management.md` — HashiCorp Vault with AppRole auth; no secrets in env vars or git (issue #6)
+- `docs/adr/ADR-0021-owasp-llm-top10-checklist.md` — Full OWASP LLM Top 10 mitigations for all Agentic AI components (issue #6)
+- `docs/adr/ADR-0022-dependency-pinning-cve-scanning.md` — pip-compile hash pinning + Grype/Trivy CVE scanning (issue #6)
 - `docs/adr/ADR-0011-golden-signals-canonical-metric-set.md` — Four Golden Signals as canonical metric set for all service monitoring (issue #5)
 - `docs/adr/ADR-0012-opentelemetry-instrumentation-standard.md` — OpenTelemetry as unified instrumentation standard; W3C TraceContext propagation (issue #5)
 - `docs/adr/ADR-0013-structured-json-logging-schema.md` — Structured JSON logging with 11 mandatory fields including trace_id and span_id (issue #5)
