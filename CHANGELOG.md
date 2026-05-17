@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.3](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.5.2...v0.5.3) (2026-05-17)
+
+### Added
+
+- **lim:** Phase 7 [A1] — LIM sub-project scaffold: specs (analytics-api, log-ingestion-api) and service pyproject.toml — issue [#59](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/59) ([#69](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/69)) ([3c81e14](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/3c81e14))
+
+---
+
 ## [0.5.2](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.5.1...v0.5.2) (2026-05-17)
 
 ### Added
