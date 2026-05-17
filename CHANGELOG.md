@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `specs/observability/08-golden-signals.md` — p50/p95/p99 targets per service tier; LLM latency metric; error rate thresholds; saturation signals (issue #11)
+- `specs/observability/09-logging-schema.md` — 11 mandatory JSON fields with PII masking rules; log levels; event vocabulary; Loki label set; retention per environment (issue #11)
+- `specs/observability/10-tracing-schema.md` — span naming convention; 11 mandatory attributes; sampling strategy; W3C TraceContext with incident_id extension; end-to-end agent hop example (issue #11)
+- `specs/observability/11-slo-definitions.md` — 5 SLIs; SLO targets per tier; multi-window burn-rate thresholds; error budget policy; on-call trigger conditions (issue #11)
 - `specs/sdlc/04-definition-of-done.md` — DoD checklists per story type (feat/fix/security/docs/refactor/chore) + Release DoD (issue #10)
 - `specs/sdlc/05-branching-strategy.md` — Trunk-based branch patterns, naming convention, protection rules, hotfix flow (issue #10)
 - `specs/sdlc/06-pr-and-review-process.md` — PR checklist, all 14 CI gates + 4 doc gates, reviewer obligations, merge ceremony (issue #10)
