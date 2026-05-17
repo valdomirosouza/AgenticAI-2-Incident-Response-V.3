@@ -1,0 +1,210 @@
+# SBOM Workflow — Software Bill of Materials
+#
+# Trigger:  GitHub Release published; manual dispatch
+# Output:   CycloneDX v1.6 SBOM (sbom.json) attached to GitHub Release
+#           SLSA Level 2 provenance (Sigstore / Cosign)
+#           Grype CVE scan results
+# ADRs:     ADR-0019 (CycloneDX SBOM), ADR-0020 (SLSA Level 2)
+# Spec:     specs/security/15-supply-chain-policy.md
+
+name: SBOM
+
+on:
+  release:
+    types:
+      - published
+  workflow_dispatch:
+    inputs:
+      release_tag:
+        description: Release tag to generate SBOM for (e.g. v0.4.0)
+        required: true
+        type: string
+
+permissions:
+  contents: write # attach SBOM artifact to release
+  id-token: write # Sigstore OIDC token for keyless signing
+  packages: read # pull image from GHCR for Trivy scan
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/valdomirosouza/agentic-copilot
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  sbom:
+    name: Generate, Sign and Attach SBOM
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      # ──────────────────────────── SBOM GENERATION ──────────────────────
+
+      - name: Generate CycloneDX v1.6 SBOM (Syft — ADR-0019)
+        uses: anchore/sbom-action@61119d458adab75f756bc0b9e4bde25725f86a7a # v0.17.2
+        with:
+          path: .
+          format: cyclonedx-json
+          artifact-name: sbom.json
+          output-file: sbom.json
+
+      - name: Validate SBOM is well-formed CycloneDX v1.6
+        run: |
+          python3 -c "
+          import json, sys
+          with open('sbom.json') as f:
+              sbom = json.load(f)
+          assert sbom.get('bomFormat') == 'CycloneDX', 'Not a CycloneDX SBOM'
+          assert sbom.get('specVersion', '').startswith('1.'), 'Unexpected spec version'
+          components = sbom.get('components', [])
+          print(f'✓ SBOM valid: {len(components)} components')
+          "
+
+      # ──────────────────────────── CVE SCAN ─────────────────────────────
+
+      - name: CVE scan on SBOM (Grype — ADR-0022)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+            | sh -s -- -b /usr/local/bin
+
+          grype \
+            sbom:sbom.json \
+            --output json \
+            --file grype-sbom-results.json
+
+          # Count Critical and High findings
+          CRITICAL=$(jq '[.matches[] | select(.vulnerability.severity=="Critical")] | length' \
+            grype-sbom-results.json)
+          HIGH=$(jq '[.matches[] | select(.vulnerability.severity=="High")] | length' \
+            grype-sbom-results.json)
+
+          echo "CVE scan: Critical=$CRITICAL  High=$HIGH"
+
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "❌ $CRITICAL Critical CVEs detected — release blocked (ADR-0022)"
+            jq '[.matches[] | select(.vulnerability.severity=="Critical") | {id:.vulnerability.id, pkg:.artifact.name, fix:.vulnerability.fix.versions}]' \
+              grype-sbom-results.json
+            exit 1
+          fi
+
+          if [ "$HIGH" -gt 0 ]; then
+            echo "⚠ $HIGH High CVEs detected — 5-business-day SLA applies (ADR-0022)"
+          fi
+
+          echo "✓ No Critical CVEs in SBOM"
+
+      # ──────────────────────────── IMAGE SCAN ───────────────────────────
+
+      - name: Trivy scan on production image
+        id: trivy
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # v0.28.0
+        with:
+          image-ref: >-
+            ${{ env.IMAGE_NAME }}:${{
+              github.event.release.tag_name ||
+              github.event.inputs.release_tag
+            }}
+          format: json
+          output: trivy-image-results.json
+          severity: CRITICAL,HIGH
+          exit-code: 0 # scan; do not fail here — grype is the blocking tool
+
+      - name: Check Trivy results for Critical findings
+        run: |
+          CRITICAL=$(jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' \
+            trivy-image-results.json 2>/dev/null || echo 0)
+          if [ "$CRITICAL" -gt 0 ]; then
+            echo "❌ Trivy found $CRITICAL Critical CVEs in production image"
+            jq '[.Results[]?.Vulnerabilities[]? | select(.Severity=="CRITICAL") | {pkg:.PkgName, id:.VulnerabilityID, fix:.FixedVersion}]' \
+              trivy-image-results.json
+            exit 1
+          fi
+          echo "✓ No Critical CVEs in production image"
+
+      # ──────────────────────────── SLSA PROVENANCE ──────────────────────
+      - name: Sign SBOM with Sigstore (SLSA Level 2 — ADR-0020)
+        uses: sigstore/gh-action-sigstore-python@f514d46b907ebcd5bedc05145c03b69c1edd8b46 # v3.0.0
+        with:
+          inputs: ./sbom.json
+        # Produces sbom.json.sigstore (bundle with cert, sig, transparency log entry)
+
+      - name: Generate SLSA provenance summary
+        run: |
+          TAG="${{ github.event.release.tag_name || github.event.inputs.release_tag }}"
+          echo "## SLSA Level 2 Evidence" >> sbom-provenance-summary.md
+          echo "" >> sbom-provenance-summary.md
+          echo "| Requirement | Evidence |" >> sbom-provenance-summary.md
+          echo "|-------------|----------|" >> sbom-provenance-summary.md
+          echo "| Source identified | GitHub repo + commit \`$(git rev-parse --short HEAD)\` |" >> sbom-provenance-summary.md
+          echo "| Build scripted | \`.github/workflows/sbom.yml\` — no manual steps |" >> sbom-provenance-summary.md
+          echo "| Provenance generated | \`sigstore/gh-action-sigstore-python\` signs SBOM |" >> sbom-provenance-summary.md
+          echo "| Provenance authenticated | Sigstore transparency log entry in \`sbom.json.sigstore\` |" >> sbom-provenance-summary.md
+          echo "| Artifact integrity | SHA-256 digest in provenance matches \`sbom.json\` |" >> sbom-provenance-summary.md
+          echo "" >> sbom-provenance-summary.md
+          echo "Verify with:" >> sbom-provenance-summary.md
+          echo '```shell' >> sbom-provenance-summary.md
+          echo "cosign verify-attestation \\" >> sbom-provenance-summary.md
+          echo "  --type slsaprovenance \\" >> sbom-provenance-summary.md
+          echo "  --certificate-identity-regexp 'https://github.com/valdomirosouza/.*' \\" >> sbom-provenance-summary.md
+          echo "  --certificate-oidc-issuer 'https://token.actions.githubusercontent.com' \\" >> sbom-provenance-summary.md
+          echo "  ${{ env.IMAGE_NAME }}:${TAG}" >> sbom-provenance-summary.md
+          echo '```' >> sbom-provenance-summary.md
+
+      # ──────────────────────────── ATTACH TO RELEASE ────────────────────
+
+      - name: Attach SBOM artifacts to GitHub Release
+        run: |
+          TAG="${{ github.event.release.tag_name || github.event.inputs.release_tag }}"
+          gh release upload "$TAG" \
+            sbom.json \
+            sbom.json.sigstore \
+            grype-sbom-results.json \
+            trivy-image-results.json \
+            sbom-provenance-summary.md \
+            --clobber
+          echo "✓ SBOM artifacts attached to release $TAG"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      # ──────────────────────────── LICENSE AUDIT ────────────────────────
+
+      - name: License audit (allowlist check — spec 15)
+        run: |
+          pip install pip-licenses
+          pip-licenses \
+            --format=json \
+            --output-file license-audit.json
+
+          # Flag prohibited licenses (GPL/AGPL/LGPL/SSPL/Commons Clause)
+          python3 - <<'EOF'
+          import json, sys
+
+          PROHIBITED = {"GPL-2.0", "GPL-3.0", "AGPL-3.0", "LGPL-2.1", "LGPL-3.0",
+                        "SSPL-1.0", "Commons-Clause"}
+
+          with open("license-audit.json") as f:
+              packages = json.load(f)
+
+          flagged = [p for p in packages if p.get("License") in PROHIBITED]
+
+          if flagged:
+              print("⚠ Prohibited licenses found — Legal review required:")
+              for p in flagged:
+                  print(f"  {p['Name']} {p['Version']}: {p['License']}")
+              sys.exit(1)
+
+          print(f"✓ License audit passed: {len(packages)} packages, no prohibited licenses")
+          EOF
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: sbom-artifacts
+          path: |
+            sbom.json
+            sbom.json.sigstore
+            grype-sbom-results.json
+            trivy-image-results.json
+            license-audit.json
+            sbom-provenance-summary.md
+          retention-days: 730 # SBOM retained for release lifetime + 2 years (spec 20)

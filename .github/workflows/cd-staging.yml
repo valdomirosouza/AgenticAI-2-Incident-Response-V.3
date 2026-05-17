@@ -1,0 +1,253 @@
+# CD Pipeline — Staging Deployment
+#
+# Trigger:  Push to main (after CI passes); manual dispatch
+# Deploys:  staging environment (Kubernetes — staging namespace)
+# Gates:    harness/staging-check.yml (S01–S10)
+# ADRs:     ADR-0009 (blue-green), ADR-0018 (DAST), ADR-0023 (HITL e2e)
+# Spec:     specs/sdlc/07-release-process.md §3.4
+
+name: CD — Staging
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Image tag to deploy (default: sha-<commit>)
+        required: false
+        type: string
+
+permissions:
+  contents: read
+  id-token: write   # Workload Identity Federation for GCP
+
+concurrency:
+  group: cd-staging
+  cancel-in-progress: false   # never cancel an in-progress staging deploy
+
+env:
+  PYTHON_VERSION: "3.12"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/valdomirosouza/agentic-copilot
+  STAGING_NAMESPACE: copilot-staging
+  STAGING_BASE_URL: https://staging.copilot.internal
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+
+  # ─────────────────────────── PREREQUISITE — CI GREEN ─────────────────────
+
+  check-ci:
+    name: Verify CI green on main
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check CI workflow status
+        run: |
+          STATUS=$(gh run list \
+            --workflow ci.yml \
+            --branch main \
+            --limit 1 \
+            --json conclusion \
+            --jq '.[0].conclusion')
+          if [ "$STATUS" != "success" ]; then
+            echo "❌ CI is not green on main (status: $STATUS). Aborting staging deploy."
+            exit 1
+          fi
+          echo "✓ CI is green on main"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────── BUILD & PUSH IMAGE ──────────────────────────
+
+  build-and-push:
+    name: Build and push container image
+    runs-on: ubuntu-latest
+    needs: check-ci
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tags }}
+      image_digest: ${{ steps.push.outputs.digest }}
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Log in to GHCR
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567  # v3.3.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extract image metadata
+        id: meta
+        uses: docker/metadata-action@70b2cdc6480c1a8b86edf1777157f8f437de2166  # v5.5.1
+        with:
+          images: ${{ env.IMAGE_NAME }}
+          tags: |
+            type=sha,prefix=sha-,format=short
+            type=raw,value=staging-latest
+
+      - name: Build and push image
+        id: push
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75  # v6.9.0
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  # ─────────────────────────── DEPLOY TO STAGING ───────────────────────────
+
+  deploy-staging:
+    name: Deploy to staging (blue-green — ADR-0009)
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    environment: staging
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Authenticate to GKE
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f  # v2.1.7
+        with:
+          workload_identity_provider: ${{ secrets.GKE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GKE_SERVICE_ACCOUNT }}
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@6051de21ad50fbb1767bc93c11357a49082ad116  # v2.2.1
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ secrets.GKE_CLUSTER_LOCATION }}
+
+      - name: Deploy new image (green slot)
+        run: |
+          IMAGE_TAG="${{ needs.build-and-push.outputs.image_tag }}"
+          kubectl set image deployment/copilot-green \
+            copilot="${{ env.IMAGE_NAME }}:sha-$(git rev-parse --short HEAD)" \
+            -n ${{ env.STAGING_NAMESPACE }}
+          kubectl rollout status deployment/copilot-green \
+            -n ${{ env.STAGING_NAMESPACE }} \
+            --timeout=300s
+
+  # ─────────────────────────── S01–S03 — DAST ──────────────────────────────
+
+  dast:
+    name: DAST — ZAP + Nuclei (S01–S03)
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: S01 — ZAP baseline scan (passive)
+        uses: zaproxy/action-baseline@7d788a1f77d94f3f6fb985edd1a9e756a3e60213  # v0.12.0
+        with:
+          target: ${{ env.STAGING_BASE_URL }}
+          rules_file_name: .zap/baseline.yml
+          cmd_options: -J reports/zap-baseline.json
+        env:
+          ZAP_BEARER_TOKEN: ${{ secrets.ZAP_BEARER_TOKEN }}
+
+      - name: S02 — ZAP active scan
+        uses: zaproxy/action-full-scan@a97e65b9f941628e5e38b39b9b1e41de9700d9c6  # v0.10.0
+        with:
+          target: ${{ env.STAGING_BASE_URL }}
+          rules_file_name: .zap/active-scan.yml
+          cmd_options: -J reports/zap-active.json
+        env:
+          ZAP_BEARER_TOKEN: ${{ secrets.ZAP_SCANNER_TOKEN }}
+
+      - name: S03 — Nuclei CVE probe
+        run: |
+          docker run --rm projectdiscovery/nuclei:latest \
+            -target ${{ env.STAGING_BASE_URL }} \
+            -tags cve \
+            -severity critical,high \
+            -rate-limit 50 \
+            -output reports/nuclei-findings.json \
+            -json
+          # Fail if any Critical matches found
+          CRITICAL_COUNT=$(jq '[.[] | select(.info.severity=="critical")] | length' \
+            reports/nuclei-findings.json 2>/dev/null || echo 0)
+          if [ "$CRITICAL_COUNT" -gt 0 ]; then
+            echo "❌ Nuclei found $CRITICAL_COUNT Critical CVE matches"
+            exit 1
+          fi
+
+      - name: Upload DAST reports
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: dast-reports
+          path: reports/
+          retention-days: 30
+
+  # ─────────────────────────── S04–S10 — E2E & SLO ────────────────────────
+
+  staging-e2e:
+    name: Staging E2E and SLO Tests (S04–S10)
+    runs-on: ubuntu-latest
+    needs: deploy-staging
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2f  # v5.3.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install test dependencies
+        run: pip install --require-hashes -r requirements.lock
+
+      - name: S04 — Prompt injection tests (OWASP LLM01)
+        run: |
+          pytest tests/security/prompt_injection/ \
+            -v --tb=short -m staging
+        env:
+          STAGING_BASE_URL: ${{ env.STAGING_BASE_URL }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+
+      - name: S05 — HITL gate e2e
+        run: |
+          pytest tests/e2e/test_hitl_gate.py \
+            -v --tb=short -m staging
+        env:
+          STAGING_BASE_URL: ${{ env.STAGING_BASE_URL }}
+          VAULT_TOKEN: ${{ secrets.VAULT_TOKEN_STAGING }}
+
+      - name: S06 — Audit trail write SLO (100%)
+        run: |
+          pytest tests/e2e/test_audit_trail.py \
+            -v --tb=short -m staging
+
+      - name: S07 — PII sanitizer integration
+        run: |
+          pytest tests/integration/test_pii_sanitizer.py \
+            -v --tb=short -m staging
+
+      - name: S09 — Kill-switch drill (RTO < 10s staging)
+        run: |
+          pytest tests/e2e/test_kill_switch.py \
+            -v --tb=short -m staging
+
+      - name: S10 — BLOCKED action enforcement
+        run: |
+          pytest tests/unit/test_blocked_actions.py \
+               tests/integration/test_action_executor_blocked.py \
+            -v --tb=short
+
+      - name: S08 — SLO smoke test (k6)
+        uses: grafana/k6-action@e4f99b26e5b7eb1ab0a8db1d025f9c14d2e06ff8  # v0.3.1
+        with:
+          filename: tests/load/smoke.js
+        env:
+          K6_BASE_URL: ${{ env.STAGING_BASE_URL }}
+
+      - name: Upload E2E results
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        with:
+          name: staging-e2e-results
+          path: reports/
+          retention-days: 30

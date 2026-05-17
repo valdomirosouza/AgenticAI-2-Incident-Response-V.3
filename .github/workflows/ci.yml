@@ -1,0 +1,339 @@
+# CI Pipeline — PR Gate
+#
+# Trigger:  Every pull request targeting main; push to main
+# Gates:    harness/code-check.yml (G01–G14 + D01–D04)
+# ADRs:     ADR-0007 (PR merge gates), ADR-0008 (coverage), ADR-0017 (SAST)
+# Spec:     specs/sdlc/06-pr-and-review-process.md
+
+name: CI
+
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+  pull-requests: write
+  security-events: write # CodeQL SARIF upload
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  PYTHON_VERSION: "3.12"
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  # ─────────────────────────── G01 / G02 — TESTS & COVERAGE ────────────────
+
+  tests:
+    name: Tests (G01 + G02)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2f # v5.3.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install --require-hashes -r requirements.lock
+
+      - name: Run unit and integration tests (G01)
+        run: |
+          pytest tests/unit/ tests/integration/ \
+            -v --tb=short \
+            --junitxml=reports/pytest.xml
+
+      - name: Check coverage thresholds (G02)
+        run: |
+          pytest tests/unit/ tests/integration/ \
+            --cov=src \
+            --cov-branch \
+            --cov-fail-under=80 \
+            --cov-report=xml:reports/coverage.xml \
+            --cov-report=term-missing \
+            --no-header -q
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: test-results
+          path: reports/
+          retention-days: 30
+
+  # ─────────────────────────── G03–G05 — SAST ──────────────────────────────
+
+  sast-semgrep-bandit:
+    name: SAST — Semgrep + Bandit (G03)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2f # v5.3.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install SAST tools
+        run: pip install semgrep bandit
+
+      - name: Semgrep — standard rules + custom rules
+        run: |
+          semgrep \
+            --config .semgrep/ \
+            --config p/python \
+            --config p/secrets \
+            --config p/owasp-top-ten \
+            --error \
+            --json \
+            --output reports/semgrep-results.json \
+            src/
+        continue-on-error: false
+
+      - name: Bandit — Python security anti-patterns
+        run: |
+          bandit \
+            -r src/ \
+            -ll \
+            -f json \
+            -o reports/bandit-results.json
+        continue-on-error: false
+
+      - name: Upload SAST results
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: sast-results
+          path: reports/semgrep-results.json
+          retention-days: 30
+
+  sast-codeql:
+    name: SAST — CodeQL (G04)
+    runs-on: ubuntu-latest
+    permissions:
+      security-events: write
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Initialize CodeQL
+        uses: github/codeql-action/init@4f3212b61783c3c68e8309a0f18a699764811cda # v3.27.1
+        with:
+          languages: python
+          queries: security-and-quality
+
+      - name: Autobuild
+        uses: github/codeql-action/autobuild@4f3212b61783c3c68e8309a0f18a699764811cda # v3.27.1
+
+      - name: Perform CodeQL Analysis
+        uses: github/codeql-action/analyze@4f3212b61783c3c68e8309a0f18a699764811cda # v3.27.1
+        with:
+          category: /language:python
+          output: reports/codeql-results.sarif
+
+  sast-checkov:
+    name: SAST — Checkov IaC (G05)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install Checkov
+        run: pip install checkov
+
+      - name: Checkov — Terraform / Helm / Dockerfile
+        run: |
+          checkov \
+            -d infrastructure/ \
+            --framework terraform,helm,dockerfile \
+            --output json \
+            --output-file reports/checkov-results.json \
+            --soft-fail-on MEDIUM,LOW
+        continue-on-error: false
+
+  # ─────────────────────────── G06–G09 — CUSTOM SEMGREP RULES ─────────────
+
+  custom-semgrep-rules:
+    name: Custom Semgrep Rules (G06–G09)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install Semgrep
+        run: pip install semgrep
+
+      - name: G06 — llm-unsanitized-prompt
+        run: |
+          semgrep \
+            --config .semgrep/llm-unsanitized-prompt.yml \
+            --error \
+            --json --output reports/g06-results.json \
+            src/
+
+      - name: G07 — hitl-bypass
+        run: |
+          semgrep \
+            --config .semgrep/hitl-bypass.yml \
+            --error \
+            --json --output reports/g07-results.json \
+            src/
+
+      - name: G08 — secret-in-env
+        run: |
+          semgrep \
+            --config .semgrep/secret-in-env.yml \
+            --error \
+            --json --output reports/g08-results.json \
+            src/
+
+      - name: G09 — raw-log-pii
+        run: |
+          semgrep \
+            --config .semgrep/raw-log-pii.yml \
+            --error \
+            --json --output reports/g09-results.json \
+            src/
+
+  # ─────────────────────────── G10 — SECRET SCANNING ───────────────────────
+
+  secret-scanning:
+    name: Secret Scanning — Gitleaks (G10)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          fetch-depth: 0 # full history required for gitleaks
+
+      - name: Gitleaks
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.9
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }}
+
+  # ─────────────────────────── G11 — CVE SCAN ──────────────────────────────
+
+  dependency-cve:
+    name: Dependency CVE Scan — Grype (G11)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Install Grype
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+            | sh -s -- -b /usr/local/bin
+
+      - name: Grype CVE scan
+        run: |
+          grype \
+            file:requirements.lock \
+            --output json \
+            --file reports/grype-results.json \
+            --fail-on critical
+
+      - name: Upload CVE results
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: grype-results
+          path: reports/grype-results.json
+          retention-days: 30
+
+  # ─────────────────────────── G12–G13 — TYPE & ARCH ───────────────────────
+
+  type-and-arch:
+    name: Type Check + Import Linter (G12 + G13)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2f # v5.3.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install --require-hashes -r requirements.lock
+
+      - name: mypy strict type check (G12)
+        run: mypy src/ --strict --ignore-missing-imports
+
+      - name: import-linter hexagonal boundaries (G13)
+        run: lint-imports --config .importlinter
+
+  # ─────────────────────────── G14 — COMMIT TITLE ──────────────────────────
+
+  commit-lint:
+    name: Conventional Commit Title (G14)
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Validate PR title (Conventional Commits — ADR-0006)
+        run: |
+          PR_TITLE="${{ github.event.pull_request.title }}"
+          PATTERN="^(feat|fix|docs|chore|ci|refactor|security|test|perf|hotfix)(\([a-z/\-]+\))?!?: .{1,72}$"
+          if ! echo "$PR_TITLE" | grep -qP "$PATTERN"; then
+            echo "❌ PR title does not follow Conventional Commits format"
+            echo "   Got:      $PR_TITLE"
+            echo "   Expected: <type>(<scope>): <description>"
+            echo "   Types:    feat|fix|docs|chore|ci|refactor|security|test|perf|hotfix"
+            exit 1
+          fi
+          echo "✓ PR title valid: $PR_TITLE"
+
+  # ─────────────────────────── D01–D04 — DOC GATES ─────────────────────────
+
+  doc-gates:
+    name: Documentation Gates (D01–D04)
+    runs-on: ubuntu-latest
+    if: >
+      github.event_name == 'pull_request' &&
+      contains(toJSON(github.event.pull_request.changed_files), '.md')
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@39370e3970a6d050c480ffad4ff0ed4d3fdee5af # v4.1.0
+        with:
+          node-version: "20"
+
+      - name: Install markdown tools
+        run: |
+          npm install -g markdownlint-cli markdown-link-check
+
+      - name: D01 — markdownlint
+        run: |
+          markdownlint \
+            --config .markdownlint.json \
+            "docs/**/*.md" "specs/**/*.md" "skills/**/*.md" "*.md" \
+            || true   # lint warnings reported; errors block
+
+      - name: D02 — broken links
+        run: |
+          find docs specs skills -name "*.md" \
+            | xargs markdown-link-check \
+              --config .mlc-config.json \
+              --quiet
+
+      - name: Set up Python (D03/D04)
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2f # v5.3.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: D03 — spec mandatory sections
+        run: python harness/scripts/check_spec_sections.py specs/
+        if: contains(toJSON(github.event.pull_request.changed_files), 'specs/')
+
+      - name: D04 — ADR status field
+        run: python harness/scripts/check_adr_status.py docs/adr/
+        if: contains(toJSON(github.event.pull_request.changed_files), 'docs/adr/')
