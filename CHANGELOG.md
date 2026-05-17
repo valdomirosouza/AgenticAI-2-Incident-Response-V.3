@@ -11,14 +11,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [Unreleased]
+
+---
+
 ## [0.5.2](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.5.1...v0.5.2) (2026-05-17)
 
+### Added
 
-### ### Added
+- **infrastructure:** scaffold IaC — terraform, helm, monitoring — issue [#25](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/25) ([#56](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/56)) ([3639ad1](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/3639ad1))
 
-* **changelog:** fix double-### heading in v0.5.1, add test suite entry, reposition [Unreleased] ([2853e83](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/2853e836439401edd80e2278f35148b60daaa647))
+### Fixed
 
-## [Unreleased]
+- **changelog:** fix double-### heading in v0.5.1, add test suite entry, reposition [Unreleased] ([2853e83](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/2853e836439401edd80e2278f35148b60daaa647))
 
 ---
 
