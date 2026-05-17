@@ -15,6 +15,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `docs/adr/ADR-0027-privacy-by-design-sdlc.md` — Privacy by Design at all 7 SDLC phases; mandatory Privacy Impact section in every spec (issue #8)
+- `docs/adr/ADR-0028-pii-sanitization-llm-apis.md` — Presidio + regex PII sanitization gate before every LLM API call; `sanitized=True` hard gate (issue #8)
+- `docs/adr/ADR-0029-dpia-ripd-before-production.md` — DPIA/RIPD hard production gate; 6-section document with DPO sign-off required (issue #8)
+- `docs/adr/ADR-0030-data-retention-ttl-policy.md` — Explicit TTL per data category; LLM prompts never persisted; automated deletion (issue #8)
+- `docs/adr/ADR-0031-anonymization-standard-agent-datasets.md` — k-anonymity (k≥5) + differential privacy (ε=1.0) + utility ≥80% for research corpora (issue #8)
+- `docs/adr/ADR-0032-cross-border-data-transfer-safeguards.md` — Transfer register for Anthropic, GitHub, cloud providers; SCCs + LGPD art. 33 VI research basis (issue #8)
+- `prompt.md` — Full session transcript with timestamps for all prompts and responses (issue #8)
 - `docs/adr/ADR-0023-hitl-autonomous-remediation.md` — HITL cryptographic enforcement for all production remediation (issue #7)
 - `docs/adr/ADR-0024-immutable-agent-audit-trail.md` — Append-only hash-chained audit trail for every agent decision (issue #7)
 - `docs/adr/ADR-0025-kill-switch-credential-revocation.md` — Kill-switch + credential revocation protocol with RTO < 60s (issue #7)
