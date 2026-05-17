@@ -15,6 +15,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.3](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.2...v0.6.3) (2026-05-17)
+
+### Added
+
+- **lim:** Phase 7 [C1] — hexagonal port ABCs: `MetricStorePort` (8 async Redis operations) and `IngestionPort` + `IngestionResult` (driving port, partial-failure semantics, error cap 10); 103 unit tests green — issue [#63](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/63) ([#73](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/73)) ([bff65a8](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/bff65a8))
+- **docs:** service README for `log-ingestion-and-metrics` — pipeline diagram, API reference, architecture, ADR links, implementation status
+
+---
+
 ## [0.6.2](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.1...v0.6.2) (2026-05-17)
 
 ### Added
