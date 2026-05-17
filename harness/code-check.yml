@@ -1,0 +1,339 @@
+# harness/code-check.yml — PR Gate
+#
+# Trigger:  Every pull request targeting main
+# Blocks:   Merge
+# ADR:      ADR-0007 (PR merge gates), ADR-0008 (coverage thresholds)
+# Spec:     specs/sdlc/06-pr-and-review-process.md
+#
+# All gates are BINARY — pass or block. No warnings promoted later.
+# Any gate waiver requires a new ADR documenting the decision.
+
+version: "1"
+harness: code-check
+trigger: pull_request
+
+gates:
+  # ─────────────────────────── TEST GATES ──────────────────────────────────
+
+  - id: G01
+    name: unit-and-integration-tests
+    description: All unit and integration tests pass; zero failures
+    tool: pytest
+    command: pytest tests/unit/ tests/integration/ -v --tb=short
+    threshold:
+      failures: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+
+  - id: G02
+    name: coverage-thresholds
+    description: Branch coverage meets per-layer thresholds
+    tool: pytest-cov
+    command: >
+      pytest tests/unit/ tests/integration/
+      --cov=src
+      --cov-branch
+      --cov-fail-under=80
+      --cov-report=xml:coverage.xml
+    threshold:
+      overall_branch: 80 # percent — CLAUDE.md §1.6 / ADR-0008
+      domain_layer_branch: 90 # src/domain/
+      guardrails_branch: 95 # src/guardrails/
+    failure_policy: block
+    refs:
+      - ADR-0008
+
+  # ─────────────────────────── STATIC ANALYSIS ─────────────────────────────
+
+  - id: G03
+    name: semgrep-bandit
+    description: Zero Critical/High Python SAST findings (Semgrep + Bandit)
+    tools:
+      - semgrep
+      - bandit
+    commands:
+      semgrep: >
+        semgrep
+        --config .semgrep/
+        --config p/python
+        --config p/secrets
+        --config p/owasp-top-ten
+        --error
+        --json
+        --output semgrep-results.json
+        src/
+      bandit: >
+        bandit
+        -r src/
+        -ll
+        -f json
+        -o bandit-results.json
+    threshold:
+      critical: 0
+      high: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+      - ADR-0017
+
+  - id: G04
+    name: codeql
+    description: Zero Critical/High CodeQL semantic findings (injection, auth)
+    tool: codeql
+    commands:
+      create_db: codeql database create codeql-db --language=python --source-root src/
+      analyze: >
+        codeql analyze codeql-db
+        python-security-and-quality.qls
+        --format=sarif-latest
+        --output=codeql-results.sarif
+    threshold:
+      critical: 0
+      high: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+      - ADR-0017
+
+  - id: G05
+    name: checkov-iac
+    description: Zero Critical/High IaC misconfigurations (Terraform/Helm/Dockerfile)
+    tool: checkov
+    command: >
+      checkov
+      -d infrastructure/
+      --framework terraform,helm,dockerfile
+      --output json
+      --output-file checkov-results.json
+    threshold:
+      critical: 0
+      high: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+      - ADR-0017
+
+  # ─────────────────────────── CUSTOM SEMGREP RULES ────────────────────────
+
+  - id: G06
+    name: custom-rule-llm-unsanitized-prompt
+    description: LLMAdapter.complete() must always be called with sanitized=True
+    tool: semgrep
+    command: >
+      semgrep
+      --config .semgrep/llm-unsanitized-prompt.yml
+      --error
+      --json
+      --output g06-results.json
+      src/
+    threshold:
+      violations: 0
+    failure_policy: block
+    refs:
+      - ADR-0017
+      - ADR-0028
+
+  - id: G07
+    name: custom-rule-hitl-bypass
+    description: No direct adapter.execute() calls outside action_executor
+    tool: semgrep
+    command: >
+      semgrep
+      --config .semgrep/hitl-bypass.yml
+      --error
+      --json
+      --output g07-results.json
+      src/
+    threshold:
+      violations: 0
+    failure_policy: block
+    refs:
+      - ADR-0017
+      - ADR-0023
+
+  - id: G08
+    name: custom-rule-secret-in-env
+    description: No hard-coded credentials or API keys in Python or config files
+    tool: semgrep
+    command: >
+      semgrep
+      --config .semgrep/secret-in-env.yml
+      --error
+      --json
+      --output g08-results.json
+      src/
+    threshold:
+      violations: 0
+    failure_policy: block
+    refs:
+      - ADR-0017
+      - ADR-0020
+
+  - id: G09
+    name: custom-rule-raw-log-pii
+    description: No raw user data in logger calls without prior pii_sanitizer.sanitize()
+    tool: semgrep
+    command: >
+      semgrep
+      --config .semgrep/raw-log-pii.yml
+      --json
+      --output g09-results.json
+      src/
+    threshold:
+      violations: 0 # WARNING level — still blocks on any match
+    failure_policy: block
+    refs:
+      - ADR-0014
+      - ADR-0017
+      - ADR-0028
+
+  # ─────────────────────────── SECRETS & CVE ───────────────────────────────
+
+  - id: G10
+    name: secret-scanning
+    description: Zero exposed secrets in all committed files
+    tool: gitleaks
+    command: >
+      gitleaks detect
+      --config .gitleaks.toml
+      --source .
+      --report-format json
+      --report-path gitleaks-results.json
+    threshold:
+      secrets_found: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+      - RULE-C03
+
+  - id: G11
+    name: dependency-cve-scan
+    description: Zero Critical CVEs in pinned dependencies
+    tool: grype
+    command: >
+      grype
+      file:requirements.lock
+      --output json
+      --file grype-results.json
+      --fail-on critical
+    threshold:
+      critical: 0
+      high_unmitigated: 0
+    sla:
+      critical: 24h # ADR-0022 CVE SLA
+      high: 5d
+    failure_policy: block
+    refs:
+      - ADR-0007
+      - ADR-0022
+
+  # ─────────────────────────── TYPE & ARCHITECTURE ─────────────────────────
+
+  - id: G12
+    name: type-checking
+    description: Zero mypy strict-mode type errors across src/
+    tool: mypy
+    command: >
+      mypy src/
+      --strict
+      --ignore-missing-imports
+      --output json
+    threshold:
+      errors: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+
+  - id: G13
+    name: import-linter-hexagonal
+    description: No hexagonal layer boundary violations (domain cannot import adapters)
+    tool: import-linter
+    command: lint-imports --config .importlinter
+    config_file: .importlinter
+    threshold:
+      violations: 0
+    failure_policy: block
+    refs:
+      - ADR-0002
+      - ADR-0007
+
+  # ─────────────────────────── COMMIT & SBOM ───────────────────────────────
+
+  - id: G14
+    name: conventional-commit-title
+    description: PR title must follow Conventional Commits pattern (ADR-0006)
+    tool: commitlint
+    command: echo "$PR_TITLE" | commitlint --from HEAD~1
+    pattern: "^(feat|fix|docs|chore|ci|refactor|security|test|perf|hotfix)(\\([a-z/-]+\\))?!?: .{1,72}$"
+    failure_policy: block
+    refs:
+      - ADR-0006
+      - ADR-0007
+
+  # ─────────────────────────── DOC GATES ───────────────────────────────────
+  # Applied when PR modifies docs/, specs/, or skills/
+
+  - id: D01
+    name: markdown-lint
+    description: Zero markdownlint errors in modified documentation files
+    tool: markdownlint
+    command: markdownlint "docs/**/*.md" "specs/**/*.md" "skills/**/*.md"
+    trigger_paths:
+      - docs/**
+      - specs/**
+      - skills/**
+    threshold:
+      errors: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+
+  - id: D02
+    name: broken-links
+    description: Zero broken internal links in documentation
+    tool: markdown-link-check
+    command: find docs specs skills -name "*.md" | xargs markdown-link-check --config .mlc-config.json
+    trigger_paths:
+      - docs/**
+      - specs/**
+      - skills/**
+    threshold:
+      broken_links: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+
+  - id: D03
+    name: spec-mandatory-sections
+    description: All spec files must contain the 5 mandatory section headings
+    tool: custom-lint
+    command: python harness/scripts/check_spec_sections.py specs/
+    trigger_paths:
+      - specs/**
+    required_headings:
+      - "## 1. Purpose"
+      - "## 2. Context"
+      - "## 3. Decision"
+      - "## 4. Acceptance Criteria"
+      - "## 5. Linked ADRs"
+    failure_policy: block
+    refs:
+      - ADR-0007
+      - RULE-001
+
+  - id: D04
+    name: adr-status-field
+    description: All ADR files must have a Status field with a recognised value
+    tool: custom-lint
+    command: python harness/scripts/check_adr_status.py docs/adr/
+    trigger_paths:
+      - docs/adr/**
+    valid_statuses:
+      - Proposed
+      - Accepted
+      - Deprecated
+      - Superseded
+    failure_policy: block
+    refs:
+      - ADR-0007
