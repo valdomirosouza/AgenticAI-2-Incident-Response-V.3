@@ -1,0 +1,182 @@
+{
+  "__inputs": [
+    {
+      "name": "DS_PROMETHEUS",
+      "label": "Prometheus",
+      "type": "datasource",
+      "pluginId": "prometheus"
+    }
+  ],
+  "title": "Agent Observability — Incident Response Copilot",
+  "description": "LLM confidence, HITL approvals, kill-switch state, orchestrator FSM (ADR-0021, ADR-0023, ADR-0025)",
+  "tags": ["agents", "hitl", "kill-switch", "adr-0021", "adr-0025"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "15s",
+  "time": { "from": "now-3h", "to": "now" },
+  "panels": [
+    {
+      "id": 1,
+      "title": "Kill-Switch State",
+      "description": "0 = inactive, 1 = ACTIVE (all PRODUCTION_* actions blocked) — ADR-0025",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "agent_kill_switch_active", "legendFormat": "Kill-Switch" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "mappings": [
+            {
+              "options": {
+                "0": { "text": "INACTIVE", "color": "green" },
+                "1": { "text": "ACTIVE", "color": "red" }
+              },
+              "type": "value"
+            }
+          ],
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 1, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 2,
+      "title": "Agent Confidence — p50 by Role",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.50, sum(rate(agent_confidence_bucket[5m])) by (le, agent_role))",
+          "legendFormat": "p50 {{ agent_role }}"
+        },
+        {
+          "expr": "histogram_quantile(0.10, sum(rate(agent_confidence_bucket[5m])) by (le, agent_role))",
+          "legendFormat": "p10 {{ agent_role }}"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "min": 0,
+          "max": 1,
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "red" },
+              { "value": 0.6, "color": "yellow" },
+              { "value": 0.8, "color": "green" }
+            ]
+          },
+          "custom": {
+            "thresholdsStyle": { "mode": "line" }
+          }
+        }
+      }
+    },
+    {
+      "id": 3,
+      "title": "Low-Confidence Escalation Rate",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        {
+          "expr": "sum(rate(confidence_below_threshold_total[5m])) by (agent_role)",
+          "legendFormat": "{{ agent_role }}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 4,
+      "title": "HITL Approval Queue Depth",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 4, "y": 0 },
+      "targets": [
+        { "expr": "hitl_approval_pending_total", "legendFormat": "Pending" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 3, "color": "yellow" },
+              { "value": 10, "color": "red" }
+            ]
+          }
+        }
+      }
+    },
+    {
+      "id": 5,
+      "title": "HITL Approval Outcomes",
+      "type": "piechart",
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 12 },
+      "targets": [
+        {
+          "expr": "sum(increase(hitl_approvals_total{outcome=\"granted\"}[24h]))",
+          "legendFormat": "Granted"
+        },
+        {
+          "expr": "sum(increase(hitl_approvals_total{outcome=\"rejected\"}[24h]))",
+          "legendFormat": "Rejected"
+        },
+        {
+          "expr": "sum(increase(hitl_approvals_total{outcome=\"expired\"}[24h]))",
+          "legendFormat": "Expired"
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "title": "Orchestrator State Distribution",
+      "type": "bargauge",
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 12 },
+      "targets": [
+        {
+          "expr": "sum(orchestrator_state_current) by (state)",
+          "legendFormat": "{{ state }}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "short" } }
+    },
+    {
+      "id": 7,
+      "title": "PII Redactions per Minute",
+      "type": "timeseries",
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 12 },
+      "targets": [
+        {
+          "expr": "sum(rate(pii_masked_total[1m])) by (agent_role)",
+          "legendFormat": "{{ agent_role }}"
+        }
+      ],
+      "fieldConfig": { "defaults": { "unit": "ops" } }
+    },
+    {
+      "id": 8,
+      "title": "Audit Write Failures",
+      "type": "stat",
+      "gridPos": { "h": 4, "w": 4, "x": 8, "y": 0 },
+      "targets": [
+        {
+          "expr": "increase(audit_write_failures_total[1h])",
+          "legendFormat": "Failures (1h)"
+        }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "thresholds": {
+            "steps": [
+              { "value": 0, "color": "green" },
+              { "value": 1, "color": "red" }
+            ]
+          }
+        }
+      }
+    }
+  ]
+}

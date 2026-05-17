@@ -1,0 +1,92 @@
+# Agent-specific alerting rules — kill-switch, confidence, HITL timeout (ADR-0025, ADR-0021, ADR-0023)
+groups:
+  - name: agent.kill-switch
+    rules:
+      - alert: KillSwitchActivated
+        expr: agent_kill_switch_active == 1
+        for: 0m
+        labels:
+          severity: critical
+          component: kill-switch
+        annotations:
+          summary: "Agent kill-switch is ACTIVE — all PRODUCTION_* actions refused"
+          description: "Kill-switch activated by {{ $labels.activated_by }}. All production remediation is blocked. Immediate operator review required."
+          runbook_url: "https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/docs/runbooks/kill-switch.md"
+
+  - name: agent.confidence
+    rules:
+      # ADR-0021 LLM09: confidence below threshold sustained over 10 minutes signals model drift
+      - alert: AgentConfidenceLowSustained
+        expr: |
+          avg_over_time(agent_confidence{quantile="0.50"}[10m]) < 0.6
+        for: 10m
+        labels:
+          severity: warning
+          component: llm
+        annotations:
+          summary: "Agent p50 confidence below 0.6 for 10+ minutes — {{ $labels.agent_role }}"
+          description: "Median LLM confidence {{ $value | humanize }} < MIN_CONFIDENCE=0.6. Escalation rate will increase. Check model health."
+
+      - alert: AgentConfidenceCritical
+        expr: |
+          avg_over_time(agent_confidence{quantile="0.50"}[5m]) < 0.4
+        for: 5m
+        labels:
+          severity: critical
+          component: llm
+        annotations:
+          summary: "Agent confidence critically low (< 0.4) — {{ $labels.agent_role }}"
+          description: "LLM confidence {{ $value | humanize }} has dropped below critical threshold. Consider activating kill-switch."
+
+  - name: agent.hitl
+    rules:
+      # Approval request pending > 30 minutes without resolution
+      - alert: HITLApprovalTimeout
+        expr: |
+          (time() - hitl_approval_requested_timestamp) > 1800
+        for: 0m
+        labels:
+          severity: warning
+          component: hitl
+        annotations:
+          summary: "HITL approval pending > 30 minutes for incident {{ $labels.incident_id }}"
+          description: "Action {{ $labels.action_type }} on {{ $labels.target_service }} awaiting approval since {{ $value | humanizeDuration }}. No auto-execute on timeout — ADR-0023."
+
+      - alert: HITLTokenValidationFailureRate
+        expr: |
+          rate(hitl_token_validation_failures_total[5m]) > 0.1
+        for: 5m
+        labels:
+          severity: warning
+          component: hitl
+        annotations:
+          summary: "HITL token validation failure rate elevated — possible replay attack"
+          description: "Token validation failures at {{ $value | humanize }}/s. Review for HMAC key rotation or replay attack attempt."
+
+  - name: agent.audit
+    rules:
+      # AuditWriteFailure triggers kill-switch — any sustained failure is critical (ADR-0025)
+      - alert: AuditWriteFailure
+        expr: |
+          increase(audit_write_failures_total[1m]) > 0
+        for: 0m
+        labels:
+          severity: critical
+          component: audit
+        annotations:
+          summary: "Audit trail write failure — kill-switch will activate"
+          description: "{{ $value }} audit write failure(s) in the last minute. Kill-switch activation is imminent per ADR-0025."
+
+  - name: agent.pii
+    rules:
+      # Sudden spike in PII redactions may indicate data quality regression (ADR-0028)
+      - alert: PIIRedactionRateSpike
+        expr: |
+          rate(pii_masked_total[5m]) > 10
+        for: 5m
+        labels:
+          severity: warning
+          component: pii-sanitizer
+        annotations:
+          summary: "PII redaction rate spike — {{ $value | humanize }}/s"
+          description: "Unusually high PII detection rate. Verify that upstream log sanitization is functioning and that raw PII is not entering the pipeline."

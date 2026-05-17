@@ -1,0 +1,20 @@
+apiVersion: v2
+name: incident-response-copilot
+description: Agentic AI Copilot for Incident Response — MTTD/MTTR reduction (PPGCA/Unisinos)
+type: application
+version: 0.5.1
+appVersion: "0.5.1"
+keywords:
+  - agentic-ai
+  - incident-response
+  - mttd
+  - mttr
+  - hitl
+maintainers:
+  - name: Valdomiro de Oliveira Souza Júnior
+    email: valdomirojr@gmail.com
+annotations:
+  # ADR references for this chart
+  "adr/deployment-strategy": "ADR-0009 (blue-green via Argo Rollouts)"
+  "adr/secrets-management": "ADR-0023 (Vault)"
+  "adr/supply-chain": "ADR-0022 (SLSA Level 2, image SHA pinning)"
