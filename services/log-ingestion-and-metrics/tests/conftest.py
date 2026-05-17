@@ -58,3 +58,15 @@ def abnormal_termination_entry_dict(haproxy_entry_dict: dict[str, Any]) -> dict[
 def high_wait_entry_dict(haproxy_entry_dict: dict[str, Any]) -> dict[str, Any]:
     haproxy_entry_dict["timers"]["wait"] = 80
     return haproxy_entry_dict
+
+
+@pytest.fixture
+def error_4xx_entry_dict(haproxy_entry_dict: dict[str, Any]) -> dict[str, Any]:
+    haproxy_entry_dict["status_code"] = 404
+    return haproxy_entry_dict
+
+
+@pytest.fixture
+def query_string_entry_dict(haproxy_entry_dict: dict[str, Any]) -> dict[str, Any]:
+    haproxy_entry_dict["request"] = "POST /api/v1/users?dry_run=1 HTTP/1.1"
+    return haproxy_entry_dict
