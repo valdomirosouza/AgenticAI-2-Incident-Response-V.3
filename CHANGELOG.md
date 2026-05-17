@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `specs/security/12-threat-model.md` — STRIDE register (20 threats) across 4 components; trust boundary map; residual risk register (issue #12)
+- `specs/security/13-sast-dast-policy.md` — SAST toolchain (Semgrep/Bandit/CodeQL/Checkov) + 4 custom rules; DAST (ZAP+Nuclei); remediation SLAs; false-positive process (issue #12)
+- `specs/security/14-secrets-management.md` — 8-secret catalogue; Vault policies; rotation schedule; 8-step emergency revocation (RTO < 30s) (issue #12)
+- `specs/security/15-supply-chain-policy.md` — CycloneDX SBOM; hash pinning rules; CVE triage SLA; license allowlist/prohibited list; SLSA Level 2 evidence (issue #12)
 - `specs/observability/08-golden-signals.md` — p50/p95/p99 targets per service tier; LLM latency metric; error rate thresholds; saturation signals (issue #11)
 - `specs/observability/09-logging-schema.md` — 11 mandatory JSON fields with PII masking rules; log levels; event vocabulary; Loki label set; retention per environment (issue #11)
 - `specs/observability/10-tracing-schema.md` — span naming convention; 11 mandatory attributes; sampling strategy; W3C TraceContext with incident_id extension; end-to-end agent hop example (issue #11)
