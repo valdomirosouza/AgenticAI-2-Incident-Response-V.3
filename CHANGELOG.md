@@ -11,6 +11,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.2.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.1.0...v0.2.0) (2026-05-17)
+
+
+### ### Added
+
+* add CLAUDE.md with project guidance for Claude Code ([1f19292](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/1f19292b15a72f54bafdfb72dc09fae611f07344))
+* add issues.md backlog index and reference it in CLAUDE.md ([c397e3c](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/c397e3c6d207dd25891d62dd29952b19abb3d13d))
+* add project README and skills library ([6f4b8e7](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/6f4b8e78f80e5f10daa07c9abe1009c948187618))
+* **adr:** architecture & design ADRs 0001–0004 — issue [#3](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/3) ([#27](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/27)) ([6a3f787](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/6a3f787f7e88eaae3b39fdd5da47f5f0c035b056))
+* **adr:** DevSecOps & security ADRs 0016–0022 — issue [#6](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/6) ([#30](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/30)) ([5fb14d1](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/5fb14d1ab4a49468443b39c3b671f1186a79e756))
+* **adr:** Ethics & AI Governance ADRs 0023–0026 — issue [#7](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/7) ([#32](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/32)) ([22d097b](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/22d097b389e4310ded22e53bc12857d1b47a0242))
+* **adr:** observability ADRs 0011–0015 — issue [#5](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/5) ([#29](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/29)) ([cbce4ea](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/cbce4ea8ce395ebad5f8e57e7b61b99dce1ba8bc))
+* **adr:** SDLC & engineering ADRs 0005–0010 — issue [#4](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/4) ([#28](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/28)) ([a733748](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/a7337481f064384a07a449169c71a39a6d8f7dec))
+* expand CLAUDE.md with authoring workflow and conventions ([4c5665e](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/4c5665efc7ce6ec224789a7e93b0c60fe82c9cf5))
+* **privacy:** add ADR-0027 to ADR-0032 — Privacy & Data Protection ([#33](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/33)) ([a711f96](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/a711f9697d1e5d7c22fcda01813d00248e84ad61))
+* rewrite README with full project description, problem statement and roadmap ([8eb5ccd](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/8eb5ccd4fdf94c93b914322c2daca257f0619e92))
+* **skills:** add domain skills for agentic AI, incident lifecycle, MTTD/MTTR, and guardrails ([#41](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/41)) ([0c54df8](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/0c54df8c9992ea8c735590c56b4d8da721682e97))
+* **specs:** add ethics domain specs 16–18 (issue [#13](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/13)) ([#39](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/39)) ([6afa269](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/6afa2691df249196e5d6dc73c3229abccd4a8c02))
+* **specs:** add observability domain specs 08–11 (issue [#11](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/11)) ([#36](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/36)) ([3aea2db](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/3aea2db30089261a15562651eac7972ef538ac9e))
+* **specs:** add privacy domain specs 19–22 (issue [#14](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/14)) ([#40](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/40)) ([5d0efba](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/5d0efba68a589d576033b7db789f3ff9e5ba3f4e))
+* **specs:** add SDLC domain specs 04–07 (issue [#10](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/10)) ([#35](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/35)) ([c08f385](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/c08f385245099f68906c98acb64825e98c09125a))
+* **specs:** add security domain specs 12–15 (issue [#12](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/12)) ([#38](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/38)) ([492a50f](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/492a50fa43f617fb0f84faa8981edd249b1f7e33))
+* **specs:** add system domain specs 00–03 (issue [#9](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/9)) ([#34](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/34)) ([2ca1109](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/2ca110939a027fd8bb276979384151367d4f5d07))
+
+
+### ### Fixed
+
+* **ci:** enable Actions PR creation + opt into Node.js 24 for release-please ([9c55dfd](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/9c55dfdc976917010bbd24879405f7aacad766fd))
+
+
+### ### Changed
+
+* split CLAUDE.md into focused reference files to stay under 40KB ([913a200](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/913a20053c68cf191cff6fe9464fc49a618d3b66))
+
 ## [Unreleased]
 
 ### Added
