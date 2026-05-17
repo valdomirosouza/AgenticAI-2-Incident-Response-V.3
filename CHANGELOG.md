@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `skills/domain/agentic-ai-taxonomy.md` — Canonical definitions table; autonomy spectrum diagram; perception-action loop; multi-agent architecture patterns; HITL/HOTL decision heuristics; common mistakes (issue #15)
+- `skills/domain/incident-lifecycle.md` — T0–T5 lifecycle diagram; per-stage agent ownership and autonomy mode; escalation rules; MTTD/MTTR measurement points; quantitative targets per severity (issue #15)
+- `skills/domain/mttd-mttr-metrics.md` — MTTD/MTTR/MTTI/MTTF definitions; formulas; 6 ABNT-cited industry benchmarks; Prometheus recording rules; Python compute functions; statistical considerations (issue #15)
+- `skills/domain/guardrails-patterns.md` — 6 guardrail patterns with Python code (HITL gate, HOTL hook, PII sanitizer, schema validator, kill-switch, confidence threshold); composition pipeline; test requirements table (issue #15)
 - `specs/privacy/19-pii-inventory.md` — 10 PII categories; Data Flow Diagram; masking rules for logs/traces/LLM prompts; legal basis per category (issue #14)
 - `specs/privacy/20-data-retention-policy.md` — 11-category TTL schedule; backend config map; LLM prompt non-persistence; 7-step erasure procedure; audit evidence requirements (issue #14)
 - `specs/privacy/21-dpia-ripd.md` — Full DPIA/RIPD (Parts A–F); 10-risk register; DPO sign-off 2026-05-17; LGPD legitimate interest assessment; hard gate completion checklist (issue #14)
