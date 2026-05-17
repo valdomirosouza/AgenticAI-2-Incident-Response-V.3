@@ -13,6 +13,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `docs/adr/ADR-0001-c4-model-architecture-documentation.md` — C4 Model adopted for all architecture diagrams (issue #3)
+- `docs/adr/ADR-0002-hexagonal-architecture-agent-services.md` — Hexagonal Architecture (Ports & Adapters) for all agent services (issue #3)
+- `docs/adr/ADR-0003-llm-provider-model-selection.md` — Anthropic Claude Sonnet 4.6 selected as primary LLM (issue #3)
+- `docs/adr/ADR-0004-multi-agent-orchestration-pattern.md` — Orchestrator + Specialists pattern with HITL/HOTL autonomy enforcement (issue #3)
 - Branch protection on `main`: PR required, 1 approval, no force-push (issue #2)
 - `.github/pull_request_template.md` with author and reviewer checklists (issue #2)
 - `docs/glossary.md` with canonical project glossary (issue #2)
