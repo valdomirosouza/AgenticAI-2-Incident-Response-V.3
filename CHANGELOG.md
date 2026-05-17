@@ -13,6 +13,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `docs/adr/ADR-0011-golden-signals-canonical-metric-set.md` — Four Golden Signals as canonical metric set for all service monitoring (issue #5)
+- `docs/adr/ADR-0012-opentelemetry-instrumentation-standard.md` — OpenTelemetry as unified instrumentation standard; W3C TraceContext propagation (issue #5)
+- `docs/adr/ADR-0013-structured-json-logging-schema.md` — Structured JSON logging with 11 mandatory fields including trace_id and span_id (issue #5)
+- `docs/adr/ADR-0014-pii-masking-observability-pipelines.md` — PII masking enforced at application layer + OTel Collector before ingestion (issue #5)
+- `docs/adr/ADR-0015-slo-based-alerting-thresholds.md` — Multi-window multi-burn-rate SLO alerting; MTTD < 5 min for P1 (issue #5)
 - `docs/adr/ADR-0005-trunk-based-development-branching.md` — Trunk-based development with short-lived feature branches (issue #4)
 - `docs/adr/ADR-0006-conventional-commits-semver.md` — Conventional Commits v1.0.0 + SemVer 2.0.0 (issue #4)
 - `docs/adr/ADR-0007-pr-merge-gates-ci-checks.md` — 14 mandatory PR gate checks + 4 doc gates (issue #4)
