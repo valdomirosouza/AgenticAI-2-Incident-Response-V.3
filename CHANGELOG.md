@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.5.3...v0.6.0) (2026-05-17)
+
+### Added
+
+- **lim:** Phase 7 [A2] — ADRs 0033–0035: LIM service layout, Redis Sorted Sets for latency storage, exact ZRANK percentile algorithm — issue [#60](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/60) ([#70](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/70)) ([ae4418b](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/ae4418b))
+
+---
+
 ## [0.5.3](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.5.2...v0.5.3) (2026-05-17)
 
 ### Added

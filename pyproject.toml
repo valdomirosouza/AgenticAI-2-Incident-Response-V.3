@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "incident-response-copilot"
-version = "0.5.3"
+version = "0.6.0"
 description = "Agentic AI Copilot for Incident Response — MTTD/MTTR reduction (PPGCA/Unisinos)"
 readme = "README.md"
 requires-python = ">=3.12"
