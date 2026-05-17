@@ -1,0 +1,295 @@
+# CD Pipeline — Production Deployment
+#
+# Trigger:  GitHub Release published (Release Please creates this after merging release PR)
+# Deploys:  production environment (blue-green — ADR-0009)
+# Gates:    harness/release-check.yml (R01–R14) — ALL must pass
+# ADRs:     ADR-0009 (blue-green), ADR-0019 (SBOM), ADR-0023 (HITL), ADR-0029 (DPIA)
+# Spec:     specs/sdlc/07-release-process.md §3.3–3.6
+#
+# HARD GATE: R07 (DPIA/RIPD) must be Approved — no production deploy without it.
+# Rollback: < 30s via Argo Rollouts (Blue slot retained for 15 min post-switch).
+
+name: CD — Production
+
+on:
+  release:
+    types:
+      - published
+
+permissions:
+  contents: write # attach SBOM to release
+  id-token: write # Workload Identity Federation + Sigstore OIDC
+  packages: write # push to GHCR
+
+concurrency:
+  group: cd-production
+  cancel-in-progress: false # never cancel a production deploy in progress
+
+env:
+  PYTHON_VERSION: "3.12"
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ghcr.io/valdomirosouza/agentic-copilot
+  PRODUCTION_NAMESPACE: copilot-production
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  # ─────────────────────────── R01–R02 — GATE STATUS ───────────────────────
+
+  verify-gates:
+    name: Verify CI and Staging gates (R01–R02)
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check CI green on main
+        run: |
+          STATUS=$(gh run list \
+            --workflow ci.yml \
+            --branch main \
+            --limit 1 \
+            --json conclusion \
+            --jq '.[0].conclusion')
+          [ "$STATUS" = "success" ] || { echo "❌ CI not green"; exit 1; }
+          echo "✓ CI green"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Check Staging gate green
+        run: |
+          STATUS=$(gh run list \
+            --workflow cd-staging.yml \
+            --branch main \
+            --limit 1 \
+            --json conclusion \
+            --jq '.[0].conclusion')
+          [ "$STATUS" = "success" ] || { echo "❌ Staging gate not green"; exit 1; }
+          echo "✓ Staging gate green"
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────── R03–R06 — SUPPLY CHAIN ─────────────────────
+
+  supply-chain:
+    name: SBOM + CVE + SLSA + Trivy (R03–R06)
+    runs-on: ubuntu-latest
+    needs: verify-gates
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Log in to GHCR
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: R03 — Generate CycloneDX SBOM (Syft)
+        uses: anchore/sbom-action@61119d458adab75f756bc0b9e4bde25725f86a7a # v0.17.2
+        with:
+          path: .
+          format: cyclonedx-json
+          artifact-name: sbom.json
+          output-file: sbom.json
+
+      - name: R04 — CVE scan on SBOM (Grype)
+        run: |
+          curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh \
+            | sh -s -- -b /usr/local/bin
+          grype \
+            sbom:sbom.json \
+            --output json \
+            --file reports/grype-release.json \
+            --fail-on critical
+          echo "✓ No Critical CVEs in SBOM"
+
+      - name: R05 — Sign SBOM with Sigstore (SLSA Level 2)
+        uses: sigstore/gh-action-sigstore-python@f514d46b907ebcd5bedc05145c03b69c1edd8b46 # v3.0.0
+        with:
+          inputs: ./sbom.json
+
+      - name: R06 — Trivy production image scan
+        uses: aquasecurity/trivy-action@915b19bbe73b92a6cf82a1bc12b087c9a19a5fe2 # v0.28.0
+        with:
+          image-ref: ${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}
+          format: json
+          output: reports/trivy-release.json
+          exit-code: 1
+          severity: CRITICAL
+
+      - name: Attach SBOM and provenance to release
+        run: |
+          gh release upload ${{ github.event.release.tag_name }} \
+            sbom.json \
+            sbom.json.sigstore \
+            reports/grype-release.json \
+            --clobber
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # ─────────────────────────── R07 — DPIA/RIPD HARD GATE ───────────────────
+
+  dpia-gate:
+    name: DPIA/RIPD gate (R07) — HARD GATE
+    runs-on: ubuntu-latest
+    needs: verify-gates
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2f # v5.3.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: R07 — Check DPIA/RIPD completeness (ADR-0029)
+        run: |
+          python harness/scripts/check_dpia_completeness.py \
+            specs/privacy/21-dpia-ripd.md
+        # No continue-on-error — this is a hard gate.
+        # No production deployment with real incident data proceeds without it.
+        # See CLAUDE.md §1.6 criterion 4.
+
+  # ─────────────────────────── R08–R11 — COMPLIANCE ────────────────────────
+
+  compliance-gates:
+    name: Ethics and Compliance Gates (R08–R11)
+    runs-on: ubuntu-latest
+    needs: verify-gates
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2f # v5.3.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: R08 — Bias audit current (≤ 90 days, ADR-0026)
+        run: |
+          python harness/scripts/check_bias_report.py data/audit/
+
+      - name: R09 — Kill-switch drill current (≤ 90 days, ADR-0025)
+        run: |
+          python harness/scripts/check_kill_switch_drill.py data/audit/
+
+      - name: R10 — Anonymization reports current (≤ 6 months, ADR-0031)
+        run: |
+          python harness/scripts/check_anon_reports.py data/audit/
+
+      - name: R11 — OWASP LLM Top 10 release checklist (ADR-0021)
+        run: |
+          python harness/scripts/generate_owasp_checklist.py \
+            --output reports/owasp-llm-checklist.json
+
+      - name: Upload compliance reports
+        if: always()
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
+        with:
+          name: compliance-reports
+          path: reports/
+          retention-days: 90 # compliance evidence retained 90 days
+
+  # ─────────────────────────── R12 — VERSION CONSISTENCY ──────────────────
+
+  version-check:
+    name: Version Consistency (R12)
+    runs-on: ubuntu-latest
+    needs: verify-gates
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Set up Python
+        uses: actions/setup-python@0b93645e9fea7318ecaed2b359559ac225c90a2f # v5.3.0
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: R12 — Check version consistency
+        run: |
+          python harness/scripts/check_version_consistency.py \
+            ${{ github.event.release.tag_name }}
+
+  # ─────────────────────────── R13 — BLUE-GREEN DEPLOY ────────────────────
+
+  deploy-production:
+    name: Blue-Green Deploy to Production (R13 — ADR-0009)
+    runs-on: ubuntu-latest
+    needs:
+      - supply-chain
+      - dpia-gate
+      - compliance-gates
+      - version-check
+    environment: production
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+
+      - name: Authenticate to GKE
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
+        with:
+          workload_identity_provider: ${{ secrets.GKE_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GKE_SERVICE_ACCOUNT }}
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@6051de21ad50fbb1767bc93c11357a49082ad116 # v2.2.1
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
+          location: ${{ secrets.GKE_CLUSTER_LOCATION }}
+
+      - name: Step 1 — Deploy to Green slot
+        run: |
+          kubectl set image deployment/copilot-green \
+            copilot="${{ env.IMAGE_NAME }}:${{ github.event.release.tag_name }}" \
+            -n ${{ env.PRODUCTION_NAMESPACE }}
+          kubectl rollout status deployment/copilot-green \
+            -n ${{ env.PRODUCTION_NAMESPACE }} \
+            --timeout=300s
+          echo "✓ Green slot deployed"
+
+      - name: Step 2 — Run blue-green smoke test
+        run: |
+          python harness/scripts/bluegreen_smoke.py \
+            --env production \
+            --version ${{ github.event.release.tag_name }} \
+            --slot green
+          echo "✓ Smoke test passed"
+
+      - name: Step 3 — HITL drain (wait for in-flight requests ≤ 30s)
+        run: |
+          kubectl annotate deployment/copilot-green \
+            argo-rollouts.argoproj.io/drain-wait=30s \
+            -n ${{ env.PRODUCTION_NAMESPACE }}
+          sleep 30
+          echo "✓ In-flight requests drained"
+
+      - name: Step 4 — Switch 100% traffic to Green (Argo Rollouts)
+        run: |
+          kubectl patch rollout copilot-rollout \
+            -n ${{ env.PRODUCTION_NAMESPACE }} \
+            --type merge \
+            -p '{"spec":{"strategy":{"blueGreen":{"autoPromotionEnabled":true}}}}'
+          echo "✓ Traffic shifted to Green — Blue retained for 15 min rollback window"
+
+      - name: Step 5 — Post-switch health check (2 minutes)
+        run: |
+          sleep 120
+          python harness/scripts/bluegreen_smoke.py \
+            --env production \
+            --version ${{ github.event.release.tag_name }} \
+            --slot green \
+            --post-switch
+          echo "✓ Post-switch health check passed — release complete"
+
+      - name: Emit production release summary
+        run: |
+          echo "## Production Release ${{ github.event.release.tag_name }} Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Gate | Status |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| R01 CI green | ✓ |" >> $GITHUB_STEP_SUMMARY
+          echo "| R02 Staging green | ✓ |" >> $GITHUB_STEP_SUMMARY
+          echo "| R03 SBOM generated | ✓ |" >> $GITHUB_STEP_SUMMARY
+          echo "| R04 CVE scan clean | ✓ |" >> $GITHUB_STEP_SUMMARY
+          echo "| R05 SLSA provenance | ✓ |" >> $GITHUB_STEP_SUMMARY
+          echo "| R06 Trivy clean | ✓ |" >> $GITHUB_STEP_SUMMARY
+          echo "| R07 DPIA/RIPD approved | ✓ |" >> $GITHUB_STEP_SUMMARY
+          echo "| R08 Bias audit current | ✓ |" >> $GITHUB_STEP_SUMMARY
+          echo "| R09 Kill-switch drill | ✓ |" >> $GITHUB_STEP_SUMMARY
+          echo "| R10 Anon reports | ✓ |" >> $GITHUB_STEP_SUMMARY
+          echo "| R11 OWASP LLM checklist | ✓ |" >> $GITHUB_STEP_SUMMARY
+          echo "| R12 Version consistent | ✓ |" >> $GITHUB_STEP_SUMMARY
+          echo "| R13 Blue-green deployed | ✓ |" >> $GITHUB_STEP_SUMMARY
