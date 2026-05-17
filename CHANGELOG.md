@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `specs/sdlc/04-definition-of-done.md` — DoD checklists per story type (feat/fix/security/docs/refactor/chore) + Release DoD (issue #10)
+- `specs/sdlc/05-branching-strategy.md` — Trunk-based branch patterns, naming convention, protection rules, hotfix flow (issue #10)
+- `specs/sdlc/06-pr-and-review-process.md` — PR checklist, all 14 CI gates + 4 doc gates, reviewer obligations, merge ceremony (issue #10)
+- `specs/sdlc/07-release-process.md` — SemVer policy, CHANGELOG automation, blue-green flow, rollback triggers and RTO targets (issue #10)
 - `specs/system/00-project-brief.md` — Vision, objectives, scope and success criteria; RQ1–RQ4 traceability (issue #9)
 - `specs/system/01-system-architecture.md` — C4 Level 1 + Level 2 diagrams; hexagonal layer constraints; PII boundary data flow (issue #9)
 - `specs/system/02-agent-design.md` — 6-agent roster; orchestrator state machine; HITL/HOTL trigger matrix; AgentMessage schema (issue #9)
