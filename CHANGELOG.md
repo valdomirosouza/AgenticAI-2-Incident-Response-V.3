@@ -11,6 +11,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.5.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.4.0...v0.5.0) (2026-05-17)
+
+
+### ### Added
+
+* **ci:** add GitHub Actions CI/CD workflows — issue [#22](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/22) ([#51](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/51)) ([8970615](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/8970615fca1e5d501b8c821b5b2cf243cc770933))
+* **harness:** add harness gate configuration files — issue [#21](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/21) ([#49](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/49)) ([bd8a3ba](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/bd8a3bacefe3859182b56a7750bca805f7ecb174))
+* **src:** scaffold application source — hexagonal architecture, agents, guardrails — issue [#23](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/23) ([#52](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/52)) ([fae092c](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/fae092cac448cf6f838cf32ecb3a1cc988be7ed1))
+
 ## [0.4.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.3.0...v0.4.0) (2026-05-17)
 
 
