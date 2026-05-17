@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.2](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.1...v0.6.2) (2026-05-17)
+
+### Added
+
+- **lim:** Phase 7 [B2] — domain services: `LogParser` (4 Golden Signal MetricPoints per window, path extraction, error/saturation classification) and `PercentileCalculator` (exact ZRANK rank formula — ADR-0035); 80 unit tests green — issue [#62](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/62) ([#72](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/72)) ([4b9c32e](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/4b9c32e))
+
+---
+
 ## [0.6.1](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.0...v0.6.1) (2026-05-17)
 
 ### Added
