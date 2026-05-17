@@ -1,0 +1,177 @@
+# harness/doc-check.yml — Documentation Gate
+#
+# Trigger:  Any PR that modifies docs/, specs/, or skills/
+# Blocks:   Merge
+# ADR:      ADR-0007 (PR gates D01–D04)
+# Spec:     specs/sdlc/06-pr-and-review-process.md §3.2
+#
+# Applied on top of code-check.yml D01–D04 when doc paths are touched.
+# These checks are also embedded in code-check.yml (D01–D04) for reference.
+
+version: "1"
+harness: doc-check
+trigger: pull_request
+trigger_paths:
+  - docs/**
+  - specs/**
+  - skills/**
+  - "*.md"
+
+gates:
+  # ─────────────────────────── D01 MARKDOWN LINT ───────────────────────────
+
+  - id: D01
+    name: markdown-lint
+    description: Zero markdownlint errors in all modified Markdown files
+    tool: markdownlint
+    command: >
+      markdownlint
+      --config .markdownlint.json
+      "docs/**/*.md"
+      "specs/**/*.md"
+      "skills/**/*.md"
+      "*.md"
+    config_file: .markdownlint.json
+    config:
+      default: true
+      MD013:
+        line_length: 120 # table cells often exceed 80
+      MD033: false # allow inline HTML for tables
+      MD041: false # first line need not be H1 (spec files start with #)
+    threshold:
+      errors: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+
+  # ─────────────────────────── D02 BROKEN LINKS ────────────────────────────
+
+  - id: D02
+    name: broken-links
+    description: Zero broken internal links in documentation files
+    tool: markdown-link-check
+    command: >
+      find docs specs skills -name "*.md"
+      | xargs markdown-link-check
+      --config .mlc-config.json
+      --quiet
+    config_file: .mlc-config.json
+    config:
+      ignorePatterns:
+        - pattern: "^https?://" # external links not checked in CI
+      replacementPatterns:
+        - pattern: "^/"
+          replacement: "{{BASEURL}}"
+    threshold:
+      broken_links: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+
+  # ─────────────────────────── D03 SPEC MANDATORY SECTIONS ─────────────────
+
+  - id: D03
+    name: spec-mandatory-sections
+    description: All spec files (specs/**/*.md) contain all 5 mandatory section headings
+    tool: custom-lint
+    command: python harness/scripts/check_spec_sections.py specs/
+    trigger_paths:
+      - specs/**
+    required_headings:
+      - "## 1. Purpose"
+      - "## 2. Context"
+      - "## 3. Decision"
+      - "## 4. Acceptance Criteria"
+      - "## 5. Linked ADRs"
+    error_message: >
+      Spec file is missing one or more mandatory sections.
+      All 5 sections are required before implementation begins (RULE-001).
+    failure_policy: block
+    refs:
+      - ADR-0007
+      - RULE-001
+
+  # ─────────────────────────── D04 ADR STATUS FIELD ────────────────────────
+
+  - id: D04
+    name: adr-status-field
+    description: All ADR files have a Status field with a recognised lifecycle value
+    tool: custom-lint
+    command: python harness/scripts/check_adr_status.py docs/adr/
+    trigger_paths:
+      - docs/adr/**
+    valid_statuses:
+      - Proposed
+      - Accepted
+      - Deprecated
+      - Superseded
+    required_pattern: "\\*\\*Status\\*\\*:"
+    error_message: >
+      ADR file is missing **Status**: field or has an unrecognised status value.
+      Valid values: Proposed | Accepted | Deprecated | Superseded.
+    failure_policy: block
+    refs:
+      - ADR-0007
+
+  # ─────────────────────────── D05 NO PII IN DOCS ──────────────────────────
+
+  - id: D05
+    name: no-pii-in-docs
+    description: Zero PII entities detected in documentation files (RULE-C03)
+    tool: presidio-scan
+    command: >
+      python harness/scripts/presidio_scan_docs.py
+      --paths docs/ specs/ skills/
+      --languages en pt
+      --confidence-threshold 0.7
+      --entities PERSON EMAIL_ADDRESS PHONE_NUMBER IP_ADDRESS BR_CPF BR_CNPJ
+    threshold:
+      detections: 0
+    failure_policy: block
+    notes: >
+      False positives (e.g. example data in specs) must be suppressed using
+      <!-- presidio-ignore --> HTML comments. All suppressions require DPO review.
+    refs:
+      - ADR-0007
+      - RULE-C03
+      - specs/privacy/19-pii-inventory.md
+
+  # ─────────────────────────── D06 NO SECRETS IN DOCS ─────────────────────
+
+  - id: D06
+    name: no-secrets-in-docs
+    description: Zero secrets or real credentials detected in documentation files
+    tool: gitleaks
+    command: >
+      gitleaks detect
+      --config .gitleaks.toml
+      --source docs/
+      --report-format json
+      --report-path gitleaks-docs-results.json
+    threshold:
+      secrets_found: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+      - RULE-C03
+
+  # ─────────────────────────── D07 SKILL ACTIVATION TRIGGERS ──────────────
+
+  - id: D07
+    name: skill-activation-triggers
+    description: All skill files declare Domain and Activation triggers front-matter
+    tool: custom-lint
+    command: python harness/scripts/check_skill_frontmatter.py skills/
+    trigger_paths:
+      - skills/**
+    required_fields:
+      - "**Domain**:"
+      - "**Activation triggers**:"
+      - "**References**:"
+    error_message: >
+      Skill file is missing required front-matter fields.
+      All skills must declare Domain, Activation triggers, and References.
+    failure_policy: block
+    refs:
+      - ADR-0007
+      - CLAUDE.md §4

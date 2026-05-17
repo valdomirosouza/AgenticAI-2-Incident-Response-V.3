@@ -1,0 +1,235 @@
+# harness/release-check.yml — Release Gate
+#
+# Trigger:  Pre-deploy to production (runs before cd-production.yml proceeds)
+# Blocks:   Release / production deployment
+# ADR:      ADR-0007 (gates), ADR-0009 (blue-green), ADR-0019 (SBOM),
+#           ADR-0026 (bias audit), ADR-0029 (DPIA/RIPD)
+# Spec:     specs/sdlc/07-release-process.md, specs/sdlc/04-definition-of-done.md §3.3
+#
+# Hard gates (cannot be waived without a new ADR):
+#   - DPIA/RIPD approved (CLAUDE.md §1.6 criterion 4)
+#   - SBOM generated and no unmitigated Critical CVEs
+#   - All PR gates green on main HEAD
+#   - All staging gates green on the release candidate
+
+version: "1"
+harness: release-check
+trigger: pre_production_deploy
+
+checks:
+  # ─────────────────────────── CI GATE STATUS ──────────────────────────────
+
+  - id: R01
+    name: pr-gates-green-on-main
+    description: All 14 PR gates (G01–G14) green on main HEAD commit
+    check_type: ci_status
+    branch: main
+    required_workflows:
+      - ci.yml
+    required_conclusion: success
+    failure_policy: block
+    refs:
+      - ADR-0007
+      - specs/sdlc/04-definition-of-done.md
+
+  - id: R02
+    name: staging-gates-green
+    description: All staging gate checks (S01–S10) green on the release candidate deploy
+    check_type: ci_status
+    required_workflows:
+      - cd-staging.yml
+    required_conclusion: success
+    failure_policy: block
+    refs:
+      - ADR-0018
+      - harness/staging-check.yml
+
+  # ─────────────────────────── SUPPLY CHAIN ────────────────────────────────
+
+  - id: R03
+    name: sbom-generated
+    description: CycloneDX v1.6 SBOM artifact attached to GitHub Release
+    tool: syft
+    command: >
+      syft packages .
+      --output cyclonedx-json
+      --file sbom.json
+    artifact: sbom.json
+    attach_to_release: true
+    failure_policy: block
+    refs:
+      - ADR-0019
+
+  - id: R04
+    name: sbom-cve-scan
+    description: Zero unmitigated Critical CVEs in SBOM; zero unmitigated High CVEs
+    tool: grype
+    command: >
+      grype
+      sbom:sbom.json
+      --output json
+      --file grype-release-results.json
+      --fail-on critical
+    threshold:
+      critical: 0
+      high_unmitigated: 0
+    failure_policy: block
+    refs:
+      - ADR-0019
+      - ADR-0022
+
+  - id: R05
+    name: slsa-provenance
+    description: SLSA Level 2 provenance artifact signed by Sigstore and attached to release
+    tool: sigstore
+    command: >
+      python -m sigstore sign sbom.json
+      --bundle sbom.json.sigstore
+    attach_to_release: true
+    verification_command: >
+      cosign verify-attestation
+      --type slsaprovenance
+      --certificate-identity-regexp "https://github.com/valdomirosouza/.*"
+      --certificate-oidc-issuer "https://token.actions.githubusercontent.com"
+      ghcr.io/valdomirosouza/agentic-copilot:${RELEASE_TAG}
+    failure_policy: block
+    refs:
+      - ADR-0020
+
+  - id: R06
+    name: docker-image-scan
+    description: Zero Critical CVEs in production container image
+    tool: trivy
+    command: >
+      trivy image
+      --format json
+      --output trivy-release-results.json
+      --exit-code 1
+      --severity CRITICAL
+      ghcr.io/valdomirosouza/agentic-copilot:${RELEASE_TAG}
+    threshold:
+      critical: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+      - ADR-0022
+
+  # ─────────────────────────── ETHICS & COMPLIANCE ─────────────────────────
+
+  - id: R07
+    name: dpia-ripd-gate
+    description: DPIA/RIPD approved and DPO signature present — HARD GATE
+    tool: custom-lint
+    command: python harness/scripts/check_dpia_completeness.py specs/privacy/21-dpia-ripd.md
+    checks:
+      - status_is_approved
+      - dpo_signature_present
+      - all_six_sections_authored
+      - risk_register_no_unmitigated_critical_high
+    failure_policy: block
+    notes: >
+      Cannot be waived. No production deployment with real incident data proceeds
+      without this gate. See CLAUDE.md §1.6 criterion 4, ADR-0029.
+    refs:
+      - ADR-0029
+      - specs/privacy/21-dpia-ripd.md
+
+  - id: R08
+    name: bias-audit-current
+    description: Bias audit report ≤ 90 days old with release_gate_pass true
+    tool: custom-lint
+    command: python harness/scripts/check_bias_report.py data/audit/
+    threshold:
+      max_age_days: 90
+      release_gate_pass: true
+    failure_policy: block
+    refs:
+      - ADR-0026
+      - specs/ethics/18-bias-audit-plan.md
+
+  - id: R09
+    name: kill-switch-drill-current
+    description: Kill-switch drill completed within last 90 days with RTO < 60s
+    tool: custom-lint
+    command: python harness/scripts/check_kill_switch_drill.py data/audit/
+    threshold:
+      max_age_days: 90
+      rto_seconds: 60
+    failure_policy: block
+    refs:
+      - ADR-0025
+      - specs/ethics/18-bias-audit-plan.md
+
+  - id: R10
+    name: anonymization-reports-current
+    description: All evaluation corpora have passing anonymization reports ≤ 6 months old
+    tool: custom-lint
+    command: python harness/scripts/check_anon_reports.py data/audit/
+    threshold:
+      max_age_days: 180
+      overall_pass: true
+    failure_policy: block
+    refs:
+      - ADR-0031
+      - specs/privacy/22-anonymization-standard.md
+
+  # ─────────────────────────── OWASP LLM CHECKLIST ─────────────────────────
+
+  - id: R11
+    name: owasp-llm-release-checklist
+    description: OWASP LLM Top 10 release checklist artifact generated and stored
+    tool: custom-lint
+    command: python harness/scripts/generate_owasp_checklist.py --output reports/owasp-llm-checklist.json
+    checks:
+      - LLM01_sanitization_gate_active
+      - LLM02_schema_validation_active
+      - LLM04_token_budget_monitoring_active
+      - LLM06_pii_masking_active
+      - LLM08_hitl_gate_active
+      - LLM09_confidence_threshold_active
+    failure_policy: block
+    refs:
+      - ADR-0021
+
+  # ─────────────────────────── VERSION CONSISTENCY ─────────────────────────
+
+  - id: R12
+    name: version-consistency
+    description: version.txt, manifest.json and release tag are all consistent
+    tool: custom-lint
+    command: python harness/scripts/check_version_consistency.py ${RELEASE_TAG}
+    checks:
+      - version_txt_matches_tag
+      - manifest_json_matches_tag
+      - changelog_entry_exists_for_version
+    failure_policy: block
+    refs:
+      - ADR-0006
+
+  # ─────────────────────────── BLUE-GREEN SMOKE TEST ───────────────────────
+
+  - id: R13
+    name: blue-green-smoke-test
+    description: Blue-green traffic shift in staging — 100% traffic shifted, zero error budget burned
+    tool: custom-deploy-script
+    command: python harness/scripts/bluegreen_smoke.py --env staging --version ${RELEASE_TAG}
+    threshold:
+      traffic_shift_pct: 100
+      error_budget_burned_pct: 0
+      p95_latency_ms: 500
+    failure_policy: block
+    refs:
+      - ADR-0009
+
+  # ─────────────────────────── DOCUMENTATION ───────────────────────────────
+
+  - id: R14
+    name: privacy-security-docs-current
+    description: PRIVACY.md and SECURITY.md reviewed and current for this release
+    tool: custom-lint
+    command: python harness/scripts/check_doc_freshness.py PRIVACY.md SECURITY.md
+    threshold:
+      max_age_days: 90
+    failure_policy: warn # manual gate — Tech Lead confirms via PR checklist
+    refs:
+      - specs/sdlc/07-release-process.md
