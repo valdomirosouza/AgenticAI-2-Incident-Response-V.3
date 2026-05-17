@@ -15,6 +15,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- `specs/privacy/19-pii-inventory.md` — 10 PII categories; Data Flow Diagram; masking rules for logs/traces/LLM prompts; legal basis per category (issue #14)
+- `specs/privacy/20-data-retention-policy.md` — 11-category TTL schedule; backend config map; LLM prompt non-persistence; 7-step erasure procedure; audit evidence requirements (issue #14)
+- `specs/privacy/21-dpia-ripd.md` — Full DPIA/RIPD (Parts A–F); 10-risk register; DPO sign-off 2026-05-17; LGPD legitimate interest assessment; hard gate completion checklist (issue #14)
+- `specs/privacy/22-anonymization-standard.md` — 6-dataset technique selection; 5-step pipeline; k≥5/risk<5%/utility≥80% gates; DP ε=1.0; ARX journalist attack test; report schema (issue #14)
 - `specs/ethics/16-autonomy-boundaries.md` — Full action-type × autonomy matrix; HITL timeout protocol; ApprovalToken schema; BLOCKED enforcement layers; EU AI Act Art. 14 compliance (issue #13)
 - `specs/ethics/17-audit-trail.md` — 12-field event schema; 22-event vocabulary; SHA-256 hash chain; WORM storage; access control; 2-year retention; erasure procedure (issue #13)
 - `specs/ethics/18-bias-audit-plan.md` — 4 bias metrics (SCER, CV_MTTD, RCRR, KL_drift); Fairlearn tooling; quarterly cadence; remediation criteria; kill-switch drill (issue #13)
