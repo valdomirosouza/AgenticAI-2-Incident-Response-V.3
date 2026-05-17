@@ -1,0 +1,43 @@
+[importlinter]
+root_packages =
+    src
+
+[importlinter:contract:domain-independence]
+name = Domain layer has zero imports from adapters or API layers
+type = forbidden
+source_modules =
+    src.domain
+forbidden_modules =
+    src.adapters
+    src.api
+    src.agents
+    src.observability
+    src.guardrails
+
+[importlinter:contract:ports-independence]
+name = Port interfaces have zero imports from adapters
+type = forbidden
+source_modules =
+    src.ports
+forbidden_modules =
+    src.adapters
+    src.api
+
+[importlinter:contract:guardrails-domain-only]
+name = Guardrails only import from domain and standard library
+type = forbidden
+source_modules =
+    src.guardrails
+forbidden_modules =
+    src.adapters
+    src.api
+    src.agents
+
+[importlinter:contract:agents-no-adapters]
+name = Agents import ports not adapters (dependency inversion)
+type = forbidden
+source_modules =
+    src.agents
+forbidden_modules =
+    src.adapters
+    src.api
