@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.5](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.4...v0.6.5) (2026-05-17)
+
+### Added
+
+- **lim:** Phase 7 [D1] — `POST /ingestion` router (partial-failure semantics, 1 000-entry cap, errors capped at 10), `IngestionService` (orchestrates `LogParser` + `MetricStorePort` in a single `store_batch` call), `GET /health/live` + `GET /health/ready`, FastAPI app with lifespan; 169 unit tests green — issue [#65](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/65) ([#75](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/75)) ([6f34250](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/6f34250))
+
+---
+
 ## [0.6.4](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.3...v0.6.4) (2026-05-17)
 
 ### Added
