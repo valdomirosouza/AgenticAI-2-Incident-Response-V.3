@@ -45,6 +45,7 @@ jobs:
       - name: Check CI workflow status
         run: |
           STATUS=$(gh run list \
+            -R "${{ github.repository }}" \
             --workflow ci.yml \
             --branch main \
             --limit 1 \

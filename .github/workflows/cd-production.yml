@@ -42,6 +42,7 @@ jobs:
       - name: Check CI green on main
         run: |
           STATUS=$(gh run list \
+            -R "${{ github.repository }}" \
             --workflow ci.yml \
             --branch main \
             --limit 1 \
@@ -55,6 +56,7 @@ jobs:
       - name: Check Staging gate green
         run: |
           STATUS=$(gh run list \
+            -R "${{ github.repository }}" \
             --workflow cd-staging.yml \
             --branch main \
             --limit 1 \
