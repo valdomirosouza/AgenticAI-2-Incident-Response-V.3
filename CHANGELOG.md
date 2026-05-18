@@ -11,6 +11,32 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.5.2...v0.6.0) (2026-05-18)
+
+
+### ### Added
+
+* **changelog:** fix double-### heading in v0.5.2, add infrastructure entry, reposition [Unreleased] ([cd438e8](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/cd438e807e91755324e473c5b858e5771abe67fb))
+* **lim:** add specs and pyproject scaffold — issue [#59](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/59) ([#69](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/69)) ([3c81e14](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/3c81e142fc66c898af523f61349f43adcd986d28))
+* **lim:** ADRs 0033–0035 — LIM service layout, Redis sorted sets, exact ZRANK percentile ([#70](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/70)) ([ae4418b](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/ae4418bf6a9c464a4ec5ec3747d1fbb879b54f8e)), closes [#60](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/60)
+* **lim:** domain models HaproxyLogEntry, MetricPoint, SignalType, AnalyticsResult ([#71](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/71)) ([ef2ddb8](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/ef2ddb88b5aa49a2bc4cb89ebe87c73abb9bb91b))
+* **lim:** domain services LogParser + PercentileCalculator ([#72](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/72)) ([4b9c32e](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/4b9c32ef87f19a1c3eb090b1b21593f5d860c7f6))
+* **lim:** GET /analytics router with exact percentile query ([#76](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/76)) ([e61b493](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/e61b493bbf7e76cd47c98fed07f10c12c905ca81))
+* **lim:** hexagonal ports MetricStorePort + IngestionPort ([#73](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/73)) ([bff65a8](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/bff65a8851fdfde567ebd917d4d2b4d4bfd9d81b))
+* **lim:** OTel instrumentation, Prometheus alerts, and Dockerfile — issue [#67](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/67) ([#77](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/77)) ([27ff68f](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/27ff68f83116fc640b9c2d2f714d7618d9b80be3))
+* **lim:** POST /ingestion router + IngestionService + health endpoints ([#75](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/75)) ([6f34250](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/6f342504bade48007b750a18b904e0523275f5bd))
+* **lim:** RedisMetricAdapter + error class encoding ([#74](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/74)) ([620cbed](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/620cbedd0965db6fa45330e677dc370d1de6b974))
+
+
+### ### Fixed
+
+* **ci:** add -R flag to gh run list calls to fix missing git context ([2283cfc](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/2283cfc48fe471533c796fb387f34d0a8827c18e))
+* **ci:** add missing .semgrep/ custom rule files (G06-G09) ([4b2d767](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/4b2d76744f7fa204edffc17a820eb045a151dbcc))
+* **ci:** generate requirements.lock with Linux x86_64 hashes ([b460075](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/b46007566fbdbd292522c1c1edb6c77f37ebc62b))
+* **ci:** quote cd-staging workflow_dispatch description to fix YAML syntax error ([4749d80](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/4749d801a67be0b809a3eb2206ffd5cb5d2c5089))
+* **ci:** replace invalid setup-python SHA with v5.6.0 ([4a496ca](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/4a496cac7ccfa7f5577ae9fd6d4245bb7fefeeaf))
+* **ci:** replace status-snapshot check with gh run watch to handle in-progress CI ([5d824a4](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/5d824a4cbd1451fc6b6a3037860b5f7c21932a38))
+
 ## [Unreleased]
 
 ---
