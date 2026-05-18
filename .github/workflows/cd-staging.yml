@@ -44,18 +44,20 @@ jobs:
     steps:
       - name: Check CI workflow status
         run: |
-          STATUS=$(gh run list \
+          RUN_ID=$(gh run list \
             -R "${{ github.repository }}" \
             --workflow ci.yml \
             --branch main \
             --limit 1 \
-            --json conclusion \
-            --jq '.[0].conclusion')
-          if [ "$STATUS" != "success" ]; then
-            echo "❌ CI is not green on main (status: $STATUS). Aborting staging deploy."
+            --json databaseId \
+            --jq '.[0].databaseId // empty')
+          if [ -z "$RUN_ID" ]; then
+            echo "❌ No CI run found on main. Aborting staging deploy."
             exit 1
           fi
-          echo "✓ CI is green on main"
+          echo "Waiting for CI run #${RUN_ID} to complete..."
+          gh run watch "$RUN_ID" -R "${{ github.repository }}" --exit-status
+          echo "✓ CI is green on main (run #${RUN_ID})"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

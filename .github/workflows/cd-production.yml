@@ -41,29 +41,39 @@ jobs:
     steps:
       - name: Check CI green on main
         run: |
-          STATUS=$(gh run list \
+          RUN_ID=$(gh run list \
             -R "${{ github.repository }}" \
             --workflow ci.yml \
             --branch main \
             --limit 1 \
-            --json conclusion \
-            --jq '.[0].conclusion')
-          [ "$STATUS" = "success" ] || { echo "❌ CI not green"; exit 1; }
-          echo "✓ CI green"
+            --json databaseId \
+            --jq '.[0].databaseId // empty')
+          if [ -z "$RUN_ID" ]; then
+            echo "❌ No CI run found on main. Aborting production deploy."
+            exit 1
+          fi
+          echo "Waiting for CI run #${RUN_ID} to complete..."
+          gh run watch "$RUN_ID" -R "${{ github.repository }}" --exit-status
+          echo "✓ CI green (run #${RUN_ID})"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Check Staging gate green
         run: |
-          STATUS=$(gh run list \
+          RUN_ID=$(gh run list \
             -R "${{ github.repository }}" \
             --workflow cd-staging.yml \
             --branch main \
             --limit 1 \
-            --json conclusion \
-            --jq '.[0].conclusion')
-          [ "$STATUS" = "success" ] || { echo "❌ Staging gate not green"; exit 1; }
-          echo "✓ Staging gate green"
+            --json databaseId \
+            --jq '.[0].databaseId // empty')
+          if [ -z "$RUN_ID" ]; then
+            echo "❌ No staging deploy run found on main. Aborting production deploy."
+            exit 1
+          fi
+          echo "Waiting for staging run #${RUN_ID} to complete..."
+          gh run watch "$RUN_ID" -R "${{ github.repository }}" --exit-status
+          echo "✓ Staging gate green (run #${RUN_ID})"
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
