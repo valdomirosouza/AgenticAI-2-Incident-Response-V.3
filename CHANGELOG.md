@@ -15,6 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.4](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.3...v0.6.4) (2026-05-17)
+
+### Added
+
+- **lim:** Phase 7 [C2] — `RedisMetricAdapter`: concrete `MetricStorePort` backed by redis-py asyncio client; atomic pipeline writes; URL-encoded key segments; ADR-0030 TTLs (latency 86 400 s, counters 604 800 s); 136 unit tests green — issue [#64](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/64) ([#74](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/74)) ([620cbed](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/620cbed))
+
+### Changed
+
+- **lim:** `LogParser._error_value` encodes error class in `MetricPoint.value` (`4.0` = 4xx → `lim:err4`, `5.0` = 5xx/abnormal → `lim:err5`, `0.0` = clean) to enable Redis key routing without carrying `status_code` through the domain boundary
+
+---
+
 ## [0.6.3](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.2...v0.6.3) (2026-05-17)
 
 ### Added
