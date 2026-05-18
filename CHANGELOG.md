@@ -15,6 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.7.0](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.7...v0.7.0) (2026-05-17)
+
+### Added
+
+- **lim:** Phase 7 [E2] — 10 end-to-end integration tests in `tests/integration/test_pipeline_integration.py` against in-process FakeRedis (no Docker): round-trip traffic + RPS, error rate, saturation, latency P50/P99, signal filtering (traffic-only, error-only), multi-path aggregation, single-path isolation, partial failure resilience — issue [#68](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/68) ([#78](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/78)) ([5e64ab6](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/5e64ab6))
+- **ci:** `lim-service` job in `.github/workflows/ci.yml` — runs unit tests (G01), integration tests (G01), coverage ≥ 80 % (G02), mypy strict (G12), import-linter hexagonal (G13) for the LIM sub-project — issue [#68](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/68) ([#78](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/78))
+- **harness:** 4 LIM-specific gates in `harness/code-check.yml`: `LIM-G01` (unit + integration tests), `LIM-G02` (branch coverage ≥ 80 %), `LIM-G12` (mypy strict), `LIM-G13` (import-linter hexagonal); all gates binary and blocking — issue [#68](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/68) ([#78](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/78))
+- **lim:** Total LIM test suite: **230 tests passing** (220 unit + 10 integration); 3 import-linter contracts green (domain independence, ports independence, adapters no-API)
+
+---
+
 ## [0.6.7](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.6...v0.6.7) (2026-05-17)
 
 ### Added
