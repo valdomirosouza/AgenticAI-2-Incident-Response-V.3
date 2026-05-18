@@ -19,7 +19,7 @@ from fastapi import FastAPI
 
 from log_ingestion.adapters.ingestion_service import IngestionService
 from log_ingestion.adapters.redis_metric_adapter import RedisMetricAdapter
-from log_ingestion.api.routers import health, ingestion
+from log_ingestion.api.routers import analytics, health, ingestion
 from log_ingestion.domain.services.log_parser import LogParser
 
 
@@ -48,4 +48,5 @@ app = FastAPI(
 )
 
 app.include_router(ingestion.router)
+app.include_router(analytics.router)
 app.include_router(health.router)
