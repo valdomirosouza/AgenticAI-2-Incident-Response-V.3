@@ -21,11 +21,12 @@ import time
 import uuid
 from datetime import datetime, timezone
 from typing import Annotated, Literal
-
-from fastapi import APIRouter, Depends, HTTPException, Query
 from urllib.parse import quote
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+
 from log_ingestion.api.dependencies import get_metric_store
+from log_ingestion.observability import metrics as obs
 from log_ingestion.domain.models.metric import (
     AnalyticsResult,
     ErrorMetric,
@@ -63,6 +64,7 @@ async def get_analytics(
     percentiles: Annotated[str, Query()] = "50,95,99",
 ) -> dict:
     """Return Golden Signals for a backend + optional path + time window."""
+    _t0 = time.perf_counter()
     window_secs = _WINDOW_MAP[window]
     window_ts = _current_window_ts(window_secs)
 
@@ -86,6 +88,7 @@ async def get_analytics(
         traffic_count = await store.get_counter(trx_key)
 
         if traffic_count == 0:
+            obs.record_analytics_query(signal or "all", window, "miss", time.perf_counter() - _t0)
             raise HTTPException(
                 status_code=404,
                 detail=f"No data for backend='{backend}' path='{path}' window='{window}'",
@@ -104,6 +107,7 @@ async def get_analytics(
 
         trx_keys = await store.scan_keys(f"lim:trx:{b}:*:{window_ts}")
         if not trx_keys:
+            obs.record_analytics_query(signal or "all", window, "miss", time.perf_counter() - _t0)
             raise HTTPException(
                 status_code=404,
                 detail=f"No data for backend='{backend}' window='{window}'",
@@ -193,4 +197,5 @@ async def get_analytics(
     if resolved_path == "*" and lat_card >= 0:
         await store.delete_key(lat_key)
 
+    obs.record_analytics_query(signal or "all", window, "hit", time.perf_counter() - _t0)
     return result.model_dump(exclude_none=True)
