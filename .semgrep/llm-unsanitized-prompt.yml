@@ -1,0 +1,36 @@
+# G06 — LLMAdapter.complete() must always be called with the sanitized keyword.
+# Rule: any call to .complete() that omits the sanitized keyword, or passes sanitized=False,
+# is flagged as a policy violation.
+# References: ADR-0028, OWASP LLM01 (Prompt Injection)
+
+rules:
+  - id: llm-complete-missing-sanitized
+    patterns:
+      - pattern: $OBJ.complete($PROMPT, ...)
+      - pattern-not: $OBJ.complete($PROMPT, ..., sanitized=..., ...)
+    message: >
+      LLMAdapter.complete() called without the 'sanitized' keyword argument.
+      All callers must pass sanitized=True (or sanitized=<variable>) to satisfy
+      the PII gate (ADR-0028). Add 'sanitized=True' after the prompt argument.
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-20"
+      references:
+        - ADR-0028
+        - ADR-0021
+
+  - id: llm-complete-sanitized-false
+    pattern: $OBJ.complete($PROMPT, ..., sanitized=False, ...)
+    message: >
+      LLMAdapter.complete() called with sanitized=False.
+      This bypasses the PII sanitization gate (ADR-0028). Use sanitized=True
+      only after the prompt has been processed by pii_sanitizer.
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-20"
+      references:
+        - ADR-0028

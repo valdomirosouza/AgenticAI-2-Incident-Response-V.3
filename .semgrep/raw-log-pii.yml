@@ -1,0 +1,63 @@
+# G09 — No raw PII in logger calls without prior pii_sanitizer.sanitize().
+# Known PII fields (client_ip, email, phone, name) must never appear as structured
+# log keys or string-interpolated values in log messages.
+# References: ADR-0014, ADR-0028, CWE-532
+
+rules:
+  - id: raw-log-pii-client-ip-extra
+    patterns:
+      - pattern-either:
+          - pattern: logger.$METHOD(..., extra={..., "client_ip": $VAL, ...})
+          - pattern: logger.$METHOD(..., extra={..., "ip": $VAL, ...})
+          - pattern: logger.$METHOD(..., extra={..., "remote_addr": $VAL, ...})
+          - pattern: logging.$METHOD(..., extra={..., "client_ip": $VAL, ...})
+          - pattern: logging.$METHOD(..., extra={..., "ip": $VAL, ...})
+    message: >
+      Client IP address logged as a structured field without masking.
+      client_ip must never appear in logs — mask or omit it before the log call
+      (ADR-0028). Use pii_sanitizer.sanitize() if context requires it.
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: privacy
+      cwe: "CWE-532"
+      references:
+        - ADR-0028
+        - ADR-0014
+
+  - id: raw-log-pii-email-extra
+    patterns:
+      - pattern-either:
+          - pattern: logger.$METHOD(..., extra={..., "email": $VAL, ...})
+          - pattern: logger.$METHOD(..., extra={..., "user_email": $VAL, ...})
+          - pattern: logging.$METHOD(..., extra={..., "email": $VAL, ...})
+    message: >
+      Email address logged as a structured field without masking.
+      PII (email) must be passed through pii_sanitizer.sanitize() before logging
+      (ADR-0014, ADR-0028).
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: privacy
+      cwe: "CWE-532"
+      references:
+        - ADR-0028
+        - ADR-0014
+
+  - id: raw-log-pii-f-string-ip
+    patterns:
+      - pattern-either:
+          - pattern: logger.$METHOD(f"...{$REQ.client.host}...")
+          - pattern: logger.$METHOD(f"...{$REQ.headers['x-forwarded-for']}...")
+          - pattern: logging.$METHOD(f"...{$REQ.client.host}...")
+    message: >
+      Client IP interpolated directly into a log message via f-string.
+      Never embed request.client.host in log output without masking (ADR-0028).
+    languages: [python]
+    severity: WARNING
+    metadata:
+      category: privacy
+      cwe: "CWE-532"
+      references:
+        - ADR-0028
+        - ADR-0014

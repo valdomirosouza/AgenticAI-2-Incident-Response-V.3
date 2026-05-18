@@ -1,0 +1,27 @@
+# G07 — No direct ActionExecutor.execute() calls outside the action_executor module.
+# All remediation execution must flow through ActionExecutor which enforces the
+# kill-switch, BLOCKED action list, and HITL token validation (ADR-0023).
+# References: ADR-0023, spec 16 §3.5
+
+rules:
+  - id: hitl-bypass-execute-call
+    pattern: $EXECUTOR.execute($PROPOSAL, ...)
+    paths:
+      exclude:
+        - src/adapters/action_executor.py
+        - tests/
+        - "**/*_test.py"
+        - "**/test_*.py"
+        - "**/conftest.py"
+    message: >
+      Direct .execute() call detected outside src/adapters/action_executor.py.
+      All PRODUCTION_* action execution must go through ActionExecutor, which
+      enforces kill-switch, BLOCKED list, and HITL token validation (ADR-0023).
+      Route through the ActionExecutor port instead of calling .execute() directly.
+    languages: [python]
+    severity: ERROR
+    metadata:
+      category: security
+      cwe: "CWE-284"
+      references:
+        - ADR-0023
