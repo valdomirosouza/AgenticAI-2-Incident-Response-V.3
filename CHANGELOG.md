@@ -15,6 +15,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.6](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.5...v0.6.6) (2026-05-17)
+
+### Added
+
+- **lim:** Phase 7 [D2] — `GET /analytics` router: single-path and multi-path aggregation (SCAN + ZUNIONSTORE), exact latency percentiles via `PercentileCalculator` (ADR-0035), signal filtering, 404/422 semantics; 196 unit tests green — issue [#66](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/66) ([#76](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/76)) ([e61b493](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/e61b493))
+
+---
+
 ## [0.6.5](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.4...v0.6.5) (2026-05-17)
 
 ### Added
