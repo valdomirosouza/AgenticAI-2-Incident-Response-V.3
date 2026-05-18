@@ -1,0 +1,83 @@
+---
+# Prometheus alert rules for the log-ingestion-and-metrics service.
+# Spec LIM-01 §3.8, Spec LIM-02 §3.7 — observability requirements.
+# Load via Prometheus rule_files or the Alertmanager rules API.
+
+groups:
+  - name: lim_ingestion
+    rules:
+      - alert: LimHighStoreErrorRate
+        expr: |
+          sum(rate(lim_ingestion_events_total{result="store_error"}[5m]))
+          /
+          sum(rate(lim_ingestion_events_total[5m])) > 0.05
+        for: 2m
+        labels:
+          severity: critical
+          service: log-ingestion-and-metrics
+        annotations:
+          summary: "High Redis write error rate (> 5 %)"
+          description: >
+            More than 5 % of ingestion events are failing with store_error over the
+            last 5 minutes. Check Redis connectivity and pipeline health.
+
+      - alert: LimHighParseErrorRate
+        expr: |
+          sum(rate(lim_ingestion_events_total{result="parse_error"}[5m]))
+          /
+          sum(rate(lim_ingestion_events_total[5m])) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+          service: log-ingestion-and-metrics
+        annotations:
+          summary: "High parse error rate (> 10 %)"
+          description: >
+            More than 10 % of ingestion events are failing Pydantic validation over the
+            last 5 minutes. Indicates a schema mismatch in the HAProxy log producer.
+
+      - alert: LimIngestionSilent
+        expr: sum(rate(lim_ingestion_batches_total[10m])) == 0
+        for: 5m
+        labels:
+          severity: warning
+          service: log-ingestion-and-metrics
+        annotations:
+          summary: "No ingestion batches received for 10 minutes"
+          description: >
+            The POST /ingestion endpoint has received no batches for the past 10 minutes.
+            Verify HAProxy log shipper connectivity.
+
+  - name: lim_analytics
+    rules:
+      - alert: LimAnalyticsHighLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum(rate(lim_analytics_query_seconds_bucket[5m])) by (le)
+          ) > 1.0
+        for: 3m
+        labels:
+          severity: warning
+          service: log-ingestion-and-metrics
+        annotations:
+          summary: "GET /analytics P95 latency > 1 s"
+          description: >
+            The 95th-percentile response time for GET /analytics exceeds 1 second
+            over a 5-minute window. Check Redis SCAN / ZUNIONSTORE performance.
+
+      - alert: LimAnalyticsHighMissRate
+        expr: |
+          sum(rate(lim_analytics_query_seconds_count{result="miss"}[5m]))
+          /
+          sum(rate(lim_analytics_query_seconds_count[5m])) > 0.20
+        for: 5m
+        labels:
+          severity: warning
+          service: log-ingestion-and-metrics
+        annotations:
+          summary: "GET /analytics 404 miss rate > 20 %"
+          description: >
+            More than 20 % of analytics queries are returning 404 (no data for the
+            requested backend/window). May indicate stale DetectionAgent queries or
+            expired Redis keys.

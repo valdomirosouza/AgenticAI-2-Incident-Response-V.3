@@ -21,12 +21,15 @@ from log_ingestion.adapters.ingestion_service import IngestionService
 from log_ingestion.adapters.redis_metric_adapter import RedisMetricAdapter
 from log_ingestion.api.routers import analytics, health, ingestion
 from log_ingestion.domain.services.log_parser import LogParser
+from log_ingestion.observability import metrics as obs
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     redis_url = os.getenv("REDIS_URL", "redis://localhost:6379/0")
     sat_threshold_ms = int(os.getenv("LIM_SAT_THRESHOLD_MS", "50"))
+    otlp_endpoint = os.getenv("OTLP_ENDPOINT")
+    obs.configure(otlp_endpoint)
 
     redis_client: aioredis.Redis = aioredis.from_url(redis_url, decode_responses=False)
     metric_store = RedisMetricAdapter(redis_client)
