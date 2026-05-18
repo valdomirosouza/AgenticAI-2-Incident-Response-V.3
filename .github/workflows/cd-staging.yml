@@ -15,17 +15,17 @@ on:
   workflow_dispatch:
     inputs:
       image_tag:
-        description: Image tag to deploy (default: sha-<commit>)
+        description: "Image tag to deploy (default: sha-<commit>)"
         required: false
         type: string
 
 permissions:
   contents: read
-  id-token: write   # Workload Identity Federation for GCP
+  id-token: write # Workload Identity Federation for GCP
 
 concurrency:
   group: cd-staging
-  cancel-in-progress: false   # never cancel an in-progress staging deploy
+  cancel-in-progress: false # never cancel an in-progress staging deploy
 
 env:
   PYTHON_VERSION: "3.12"
@@ -36,7 +36,6 @@ env:
   FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
-
   # ─────────────────────────── PREREQUISITE — CI GREEN ─────────────────────
 
   check-ci:
@@ -69,10 +68,10 @@ jobs:
       image_tag: ${{ steps.meta.outputs.tags }}
       image_digest: ${{ steps.push.outputs.digest }}
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Log in to GHCR
-        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567  # v3.3.0
+        uses: docker/login-action@9780b0c442fbb1117ed29e0efdff1e18412f7567 # v3.3.0
         with:
           registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
@@ -80,7 +79,7 @@ jobs:
 
       - name: Extract image metadata
         id: meta
-        uses: docker/metadata-action@70b2cdc6480c1a8b86edf1777157f8f437de2166  # v5.5.1
+        uses: docker/metadata-action@70b2cdc6480c1a8b86edf1777157f8f437de2166 # v5.5.1
         with:
           images: ${{ env.IMAGE_NAME }}
           tags: |
@@ -89,7 +88,7 @@ jobs:
 
       - name: Build and push image
         id: push
-        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75  # v6.9.0
+        uses: docker/build-push-action@4f58ea79222b3b9dc2c8bbdd6debcef730109a75 # v6.9.0
         with:
           context: .
           push: true
@@ -106,16 +105,16 @@ jobs:
     needs: build-and-push
     environment: staging
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Authenticate to GKE
-        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f  # v2.1.7
+        uses: google-github-actions/auth@6fc4af4b145ae7821d527454aa9bd537d1f2dc5f # v2.1.7
         with:
           workload_identity_provider: ${{ secrets.GKE_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GKE_SERVICE_ACCOUNT }}
 
       - name: Get GKE credentials
-        uses: google-github-actions/get-gke-credentials@6051de21ad50fbb1767bc93c11357a49082ad116  # v2.2.1
+        uses: google-github-actions/get-gke-credentials@6051de21ad50fbb1767bc93c11357a49082ad116 # v2.2.1
         with:
           cluster_name: ${{ secrets.GKE_CLUSTER_NAME }}
           location: ${{ secrets.GKE_CLUSTER_LOCATION }}
@@ -137,10 +136,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-staging
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: S01 — ZAP baseline scan (passive)
-        uses: zaproxy/action-baseline@7d788a1f77d94f3f6fb985edd1a9e756a3e60213  # v0.12.0
+        uses: zaproxy/action-baseline@7d788a1f77d94f3f6fb985edd1a9e756a3e60213 # v0.12.0
         with:
           target: ${{ env.STAGING_BASE_URL }}
           rules_file_name: .zap/baseline.yml
@@ -149,7 +148,7 @@ jobs:
           ZAP_BEARER_TOKEN: ${{ secrets.ZAP_BEARER_TOKEN }}
 
       - name: S02 — ZAP active scan
-        uses: zaproxy/action-full-scan@a97e65b9f941628e5e38b39b9b1e41de9700d9c6  # v0.10.0
+        uses: zaproxy/action-full-scan@a97e65b9f941628e5e38b39b9b1e41de9700d9c6 # v0.10.0
         with:
           target: ${{ env.STAGING_BASE_URL }}
           rules_file_name: .zap/active-scan.yml
@@ -176,7 +175,7 @@ jobs:
 
       - name: Upload DAST reports
         if: always()
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: dast-reports
           path: reports/
@@ -189,10 +188,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: deploy-staging
     steps:
-      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683  # v4.2.2
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
 
       - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
           cache: pip
@@ -238,7 +237,7 @@ jobs:
             -v --tb=short
 
       - name: S08 — SLO smoke test (k6)
-        uses: grafana/k6-action@e4f99b26e5b7eb1ab0a8db1d025f9c14d2e06ff8  # v0.3.1
+        uses: grafana/k6-action@e4f99b26e5b7eb1ab0a8db1d025f9c14d2e06ff8 # v0.3.1
         with:
           filename: tests/load/smoke.js
         env:
@@ -246,7 +245,7 @@ jobs:
 
       - name: Upload E2E results
         if: always()
-        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08  # v4.6.0
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08 # v4.6.0
         with:
           name: staging-e2e-results
           path: reports/
