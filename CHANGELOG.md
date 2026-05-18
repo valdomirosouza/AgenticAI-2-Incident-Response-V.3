@@ -15,6 +15,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ---
 
+## [0.6.7](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.6...v0.6.7) (2026-05-17)
+
+### Added
+
+- **lim:** Phase 7 [E1] — OTel instrumentation: `observability/metrics.py` with `configure(otlp_endpoint)`, `lim_ingestion_events_total` counter (labels: `backend`, `result`), `lim_ingestion_batches_total` counter (label: `size_bucket`), `lim_analytics_query_seconds` histogram (labels: `signal`, `window`, `result`); wired into `POST /ingestion` and `GET /analytics` routers; `OTLP_ENDPOINT` env var drives MeterProvider at lifespan startup — issue [#67](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/67) ([#77](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/77)) ([27ff68f](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/commit/27ff68f))
+- **lim:** Multi-stage `Dockerfile`: Python 3.12 slim builder + runtime, non-root `lim` user, `/health/live` `HEALTHCHECK` — issue [#67](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/67) ([#77](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/77))
+- **lim:** `log-ingestion-alerts.yaml` — 5 Prometheus alert rules: `LimHighStoreErrorRate` (critical, > 5 %), `LimHighParseErrorRate` (warning, > 10 %), `LimIngestionSilent` (warning, no batches 10 min), `LimAnalyticsHighLatency` (warning, P95 > 1 s), `LimAnalyticsHighMissRate` (warning, > 20 % 404) — issue [#67](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/issues/67) ([#77](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/pull/77))
+- **lim:** 24 new unit tests in `test_observability_metrics.py`; total LIM test suite: **220 tests passing**
+
+---
+
 ## [0.6.6](https://github.com/valdomirosouza/AgenticAI-2-Incident-Response-V.3/compare/v0.6.5...v0.6.6) (2026-05-17)
 
 ### Added
