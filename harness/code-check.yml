@@ -260,6 +260,66 @@ gates:
 
   # ─────────────────────────── COMMIT & SBOM ───────────────────────────────
 
+  # ─────────────────────────── LIM SERVICE GATES ───────────────────────────
+  # Applied to the services/log-ingestion-and-metrics sub-project.
+  # All checks run from within that directory with the service's own pyproject.toml.
+
+  - id: LIM-G01
+    name: lim-unit-and-integration-tests
+    description: All LIM unit and integration tests pass; zero failures
+    tool: pytest
+    working_directory: services/log-ingestion-and-metrics
+    command: pytest tests/unit/ tests/integration/ -v --tb=short
+    threshold:
+      failures: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+
+  - id: LIM-G02
+    name: lim-coverage-threshold
+    description: LIM branch coverage ≥ 80 %
+    tool: pytest-cov
+    working_directory: services/log-ingestion-and-metrics
+    command: >
+      pytest tests/
+      --cov=src
+      --cov-branch
+      --cov-fail-under=80
+      --cov-report=xml:lim-coverage.xml
+    threshold:
+      overall_branch: 80
+    failure_policy: block
+    refs:
+      - ADR-0008
+
+  - id: LIM-G12
+    name: lim-type-checking
+    description: Zero mypy strict-mode type errors in the LIM service
+    tool: mypy
+    working_directory: services/log-ingestion-and-metrics
+    command: mypy src/ --strict --ignore-missing-imports
+    threshold:
+      errors: 0
+    failure_policy: block
+    refs:
+      - ADR-0007
+
+  - id: LIM-G13
+    name: lim-import-linter-hexagonal
+    description: No hexagonal boundary violations in LIM (domain ← ports ← adapters)
+    tool: import-linter
+    working_directory: services/log-ingestion-and-metrics
+    command: lint-imports
+    threshold:
+      violations: 0
+    failure_policy: block
+    refs:
+      - ADR-0002
+      - ADR-0007
+
+  # ─────────────────────────── COMMIT & SBOM ───────────────────────────────
+
   - id: G14
     name: conventional-commit-title
     description: PR title must follow Conventional Commits pattern (ADR-0006)
